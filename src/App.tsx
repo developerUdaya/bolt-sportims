@@ -1,0 +1,87 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Layout from './components/Layout/Layout';
+import PlayerLayout from './pages/player/PlayerLayout';
+import OfficialLayout from './pages/official/OfficialLayout';
+import ClubLayout from './pages/club/ClubLayout';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Players from './pages/users/Players';
+import Clubs from './pages/users/Clubs';
+import PlayersApproval from './pages/approvals/PlayersApproval';
+import Events from './pages/Events';
+import Gallery from './pages/Gallery';
+import News from './pages/News';
+import PlayerDashboard from './pages/player/PlayerDashboard';
+import UpcomingEvents from './pages/player/UpcomingEvents';
+import MyEvents from './pages/player/MyEvents';
+import PlayerProfile from './pages/player/PlayerProfile';
+import OfficialDashboard from './pages/official/OfficialDashboard';
+import ScheduleManagement from './pages/official/ScheduleManagement';
+import UpdateResults from './pages/official/UpdateResults';
+import ResultsView from './pages/official/ResultsView';
+import ParticipantsView from './pages/official/ParticipantsView';
+import ReportsPage from './pages/official/ReportsPage';
+import ClubDashboard from './pages/club/ClubDashboard';
+import ClubPlayers from './pages/club/ClubPlayers';
+import ClubEvents from './pages/club/ClubEvents';
+import ClubReports from './pages/club/ClubReports';
+import ClubProfile from './pages/club/ClubProfile';
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        
+        {/* Admin Routes */}
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="users/players" element={<Players />} />
+          <Route path="users/clubs" element={<Clubs />} />
+          <Route path="users/districts" element={<div className="p-8 text-center text-gray-500">Districts management coming soon...</div>} />
+          <Route path="users/states" element={<div className="p-8 text-center text-gray-500">States management coming soon...</div>} />
+          <Route path="users/admins" element={<div className="p-8 text-center text-gray-500">Admins management coming soon...</div>} />
+          <Route path="approvals/players" element={<PlayersApproval />} />
+          <Route path="approvals/clubs" element={<div className="p-8 text-center text-gray-500">Clubs approval coming soon...</div>} />
+          <Route path="approvals/districts" element={<div className="p-8 text-center text-gray-500">Districts approval coming soon...</div>} />
+          <Route path="approvals/states" element={<div className="p-8 text-center text-gray-500">States approval coming soon...</div>} />
+          <Route path="events" element={<Events />} />
+          <Route path="results" element={<div className="p-8 text-center text-gray-500">Results management coming soon...</div>} />
+          <Route path="gallery" element={<Gallery />} />
+          <Route path="news" element={<News />} />
+          <Route path="settings" element={<div className="p-8 text-center text-gray-500">Settings coming soon...</div>} />
+        </Route>
+
+        {/* Player Routes */}
+        <Route path="/player" element={<PlayerLayout />}>
+          <Route index element={<PlayerDashboard />} />
+          <Route path="events" element={<UpcomingEvents />} />
+          <Route path="my-events" element={<MyEvents />} />
+          <Route path="profile" element={<PlayerProfile />} />
+        </Route>
+
+        {/* Event Official Routes */}
+        <Route path="/official" element={<OfficialLayout />}>
+          <Route index element={<OfficialDashboard />} />
+          <Route path="schedules" element={<ScheduleManagement />} />
+          <Route path="update-results" element={<UpdateResults />} />
+          <Route path="results" element={<ResultsView />} />
+          <Route path="participants" element={<ParticipantsView />} />
+          <Route path="reports" element={<ReportsPage />} />
+        </Route>
+
+        {/* Club Routes */}
+        <Route path="/club" element={<ClubLayout />}>
+          <Route index element={<ClubDashboard />} />
+          <Route path="players" element={<ClubPlayers />} />
+          <Route path="events" element={<ClubEvents />} />
+          <Route path="reports" element={<ClubReports />} />
+          <Route path="profile" element={<ClubProfile />} />
+        </Route>
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
