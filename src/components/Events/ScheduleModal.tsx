@@ -104,7 +104,7 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, event, o
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">Select a race</option>
-              {event.races.map(race => (
+              {event?.races?.map(race => (
                 <option key={race.id} value={race.id}>{race.name}</option>
               ))}
             </select>
@@ -117,7 +117,7 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, event, o
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">Select age group</option>
-              {event.ageGroups.map(ageGroup => (
+              {event?.ageGroups?.map(ageGroup => (
                 <option key={ageGroup.id} value={ageGroup.id}>{ageGroup.name}</option>
               ))}
             </select>

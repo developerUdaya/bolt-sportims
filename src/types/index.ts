@@ -10,6 +10,8 @@ export interface User {
 }
 
 export interface Player extends User {
+  Email: any;
+  Name: any;
   playerId: string;
   clubId: string;
   clubName: string;

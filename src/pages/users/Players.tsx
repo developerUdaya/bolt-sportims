@@ -1,20 +1,38 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import axios from 'axios';
 import { Edit, Trash2, Eye, Plus } from 'lucide-react';
 import Table from '../../components/UI/Table';
 import Button from '../../components/UI/Button';
 import Badge from '../../components/UI/Badge';
 import Card from '../../components/UI/Card';
 import PlayerModal from '../../components/Users/PlayerModal';
-import { mockPlayers } from '../../data/mockData';
 import { Player } from '../../types';
 
+// const API_URL = 'http://103.174.10.153:3011/players/';
+// const API_URL = 'https://x92kpthd-3011.inc1.devtunnels.ms/players/';
+const baseURL = import.meta.env.VITE_API_BASE_URL;
 const Players: React.FC = () => {
-  const [players, setPlayers] = React.useState<Player[]>(mockPlayers.filter(p => p.approved));
+  const [players, setPlayers] = React.useState<Player[]>([]);
   const [sortBy, setSortBy] = React.useState<string>('');
   const [sortOrder, setSortOrder] = React.useState<'asc' | 'desc'>('asc');
   const [showModal, setShowModal] = React.useState(false);
   const [selectedPlayer, setSelectedPlayer] = React.useState<Player | null>(null);
   const [modalMode, setModalMode] = React.useState<'create' | 'edit' | 'view'>('create');
+
+  useEffect(() => {
+    fetchPlayers();
+  }, []);
+
+  const fetchPlayers = async () => {
+    try {
+      const response = await axios.get(`${baseURL}/players/`);
+      console.log(response, "Fetched players");
+
+      setPlayers(response.data);
+    } catch (error) {
+      console.error('Failed to fetch players:', error);
+    }
+  };
 
   const handleSort = (key: string) => {
     if (sortBy === key) {
@@ -27,27 +45,27 @@ const Players: React.FC = () => {
     const sorted = [...players].sort((a, b) => {
       const aValue = a[key as keyof Player];
       const bValue = b[key as keyof Player];
-      
+
       if (sortOrder === 'asc') {
         return aValue > bValue ? 1 : -1;
       } else {
         return aValue < bValue ? 1 : -1;
       }
     });
-    
+
     setPlayers(sorted);
   };
 
   const handleSearch = (query: string) => {
-    const filtered = mockPlayers
-      .filter(p => p.approved)
-      .filter(player =>
-        player.name.toLowerCase().includes(query.toLowerCase()) ||
-        player.email.toLowerCase().includes(query.toLowerCase()) ||
-        player.playerId.toLowerCase().includes(query.toLowerCase()) ||
-        player.clubName.toLowerCase().includes(query.toLowerCase())
-      );
-    setPlayers(filtered);
+    fetchPlayers(); // Always re-fetch to reset filters
+    setPlayers(prev =>
+      prev.filter(player =>
+        player.Name.toLowerCase().includes(query.toLowerCase()) ||
+        player.Email.toLowerCase().includes(query.toLowerCase()) ||
+        player.playerId.toString().toLowerCase().includes(query.toLowerCase())
+        // player.clubName.toLowerCase().includes(query.toLowerCase())
+      )
+    );
   };
 
   const handleCreatePlayer = () => {
@@ -56,7 +74,9 @@ const Players: React.FC = () => {
     setShowModal(true);
   };
 
-  const handleViewPlayer = (player: Player) => {
+  const handleViewPlayer = (player: any) => {
+    console.log('View player:', player);
+    
     setSelectedPlayer(player);
     setModalMode('view');
     setShowModal(true);
@@ -68,23 +88,28 @@ const Players: React.FC = () => {
     setShowModal(true);
   };
 
-  const handleDeletePlayer = (playerId: string) => {
+  const handleDeletePlayer = async (playerId: number) => {
     if (confirm('Are you sure you want to delete this player?')) {
-      setPlayers(prev => prev.filter(p => p.id !== playerId));
+      try {
+        await axios.delete(`${baseURL}/players/${playerId}`);
+        fetchPlayers();
+      } catch (error) {
+        console.error('Delete failed:', error);
+      }
     }
   };
 
-  const handleSavePlayer = (playerData: Partial<Player>) => {
-    if (modalMode === 'create') {
-      const newPlayer: Player = {
-        id: `${Date.now()}`,
-        ...playerData
-      } as Player;
-      setPlayers(prev => [...prev, newPlayer]);
-    } else if (modalMode === 'edit' && selectedPlayer) {
-      setPlayers(prev => prev.map(p => 
-        p.id === selectedPlayer.id ? { ...p, ...playerData } : p
-      ));
+  const handleSavePlayer = async (playerData: Partial<Player>) => {
+    try {
+      if (modalMode === 'create') {
+        await axios.post(`${baseURL}/players/register`, playerData);
+      } else if (modalMode === 'edit' && selectedPlayer) {
+        await axios.put(`${baseURL}/players/${selectedPlayer.playerId}`, playerData);
+      }
+      setShowModal(false);
+      fetchPlayers();
+    } catch (error) {
+      console.error('Save failed:', error);
     }
   };
 
@@ -103,15 +128,16 @@ const Players: React.FC = () => {
     { key: 'playerId', label: 'Player ID', sortable: true },
     { key: 'name', label: 'Name', sortable: true },
     { key: 'email', label: 'Email', sortable: true },
-    { 
-      key: 'dateOfBirth', 
-      label: 'Age', 
+    {
+      key: 'dob',
+      label: 'Age',
       sortable: true,
       render: (value: string) => calculateAge(value)
     },
-    { 
-      key: 'gender', 
-      label: 'Gender', 
+    { key: 'clubName', label: 'Club', sortable: true },
+    {
+      key: 'gender',
+      label: 'Gender',
       sortable: true,
       render: (value: string) => (
         <Badge variant="info" size="sm">
@@ -119,10 +145,10 @@ const Players: React.FC = () => {
         </Badge>
       )
     },
-    { key: 'clubName', label: 'Club', sortable: true },
-    { 
-      key: 'category', 
-      label: 'Category', 
+    { key: 'schoolName', label: 'School Name', sortable: true }, // or use ClubId if needed
+    {
+      key: 'skateCategory',
+      label: 'Category',
       sortable: true,
       render: (value: string) => (
         <Badge variant="default" size="sm">
@@ -130,19 +156,19 @@ const Players: React.FC = () => {
         </Badge>
       )
     },
-    { key: 'district', label: 'District', sortable: true },
+    { key: 'districtName', label: 'District', sortable: true },
     {
       key: 'actions',
       label: 'Actions',
-      render: (value: any, player: Player) => (
+      render: (_value: any, row: Player) => (
         <div className="flex items-center space-x-2">
-          <Button size="sm" variant="secondary" onClick={() => handleViewPlayer(player)}>
+          <Button size="sm" variant="secondary" onClick={() => handleViewPlayer(row)}>
             <Eye size={16} />
           </Button>
-          <Button size="sm" variant="primary" onClick={() => handleEditPlayer(player)}>
+          <Button size="sm" variant="primary" onClick={() => handleEditPlayer(row)}>
             <Edit size={16} />
           </Button>
-          <Button size="sm" variant="danger" onClick={() => handleDeletePlayer(player.id)}>
+          <Button size="sm" variant="danger" onClick={() => handleDeletePlayer(Number(row.playerId))}>
             <Trash2 size={16} />
           </Button>
         </div>

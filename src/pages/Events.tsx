@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Plus, Calendar, MapPin, Users, Edit, Trash2, Eye, Clock, Trophy, UserPlus } from 'lucide-react';
 import Button from '../components/UI/Button';
 import Card from '../components/UI/Card';
@@ -7,18 +7,21 @@ import Table from '../components/UI/Table';
 import CreateEventModal from '../components/Events/CreateEventModal';
 import ScheduleModal from '../components/Events/ScheduleModal';
 import ResultsModal from '../components/Events/ResultsModal';
-import { mockEvents, mockSchedules } from '../data/mockData';
+import { mockSchedules } from '../data/mockData';
 import { Event, Schedule } from '../types';
+import axios from 'axios';
 
 const Events: React.FC = () => {
-  const [events, setEvents] = React.useState<Event[]>(mockEvents);
+  const baseURL = import.meta.env.VITE_API_BASE_URL;
+  const [events, setEvents] = React.useState<Event[]>([]);
   const [schedules, setSchedules] = React.useState<Schedule[]>(mockSchedules);
-  const [selectedEvent, setSelectedEvent] = React.useState<Event | null>(null);
+  const [selectedEvent, setSelectedEvent] = React.useState<Partial<Event> | null>(null);
   const [selectedSchedule, setSelectedSchedule] = React.useState<Schedule | null>(null);
   const [showCreateModal, setShowCreateModal] = React.useState(false);
   const [showScheduleModal, setShowScheduleModal] = React.useState(false);
   const [showResultsModal, setShowResultsModal] = React.useState(false);
   const [activeView, setActiveView] = React.useState<'events' | 'schedules' | 'results'>('events');
+  const [modalMode, setModalMode] = React.useState<'create' | 'view'>('create');
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -29,70 +32,101 @@ const Events: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const fetchEvents = async () => {
+    try {
+      const response = await axios.get(`${baseURL}/events/`);
+      setEvents(response.data);
+    } catch (error) {
+      console.error('Failed to fetch events:', error);
+    }
+  };
+
+  const handleViewEvent = (event: Event) => {
+    setSelectedEvent(event);
+    setModalMode('view');
+    setShowCreateModal(true);
+  };
+
+  const handleOpenCreateModal = () => {
+    setSelectedEvent(null);
+    setModalMode('create');
+    setShowCreateModal(true);
+  };
+
   const handleCreateEvent = (eventData: Partial<Event>) => {
     const newEvent: Event = {
       id: `E${Date.now()}`,
       ...eventData,
       totalParticipants: 0,
+      registrationCount: 0,
       status: 'upcoming',
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     } as Event;
-    
+
     setEvents([...events, newEvent]);
+    setShowCreateModal(false);
   };
 
   const handleCreateSchedule = (scheduleData: Partial<Schedule>) => {
     const newSchedule: Schedule = {
       id: `S${Date.now()}`,
-      ...scheduleData
+      ...scheduleData,
     } as Schedule;
-    
+
     setSchedules([...schedules, newSchedule]);
+    setShowScheduleModal(false);
+    setSelectedEvent(null);
   };
 
   const handleUpdateResults = (updatedSchedule: Schedule) => {
     setSchedules(prev => prev.map(s => s.id === updatedSchedule.id ? updatedSchedule : s));
+    setShowResultsModal(false);
+    setSelectedSchedule(null);
   };
+
+  const handleDelete = async (eventId: any) => {
+  try {
+    await axios.delete(`${baseURL}/events/${eventId}`);
+    fetchEvents(); 
+  } catch (error) {
+    console.error('Failed to delete event:', error);
+  }
+};
+
 
   const eventsColumns = [
     { key: 'name', label: 'Event Name', sortable: true },
     { key: 'venue', label: 'Location / Venue', sortable: true },
-    { 
-      key: 'startDate', 
-      label: 'Start Date - End Date', 
+    { key: 'eventFee', label: 'Event Fee', sortable: true },
+    {
+      key: 'startDate',
+      label: 'Event Date',
       sortable: true,
-      render: (value: string, event: Event) => (
+      render: (value: string, event: any) => (
         <div>
-          <div>{new Date(event.startDate).toLocaleDateString()}</div>
-          <div className="text-sm text-gray-500">to {new Date(event.endDate).toLocaleDateString()}</div>
+          <div>{new Date(event.eventDate).toLocaleDateString()}</div>
         </div>
-      )
+      ),
     },
-    { 
-      key: 'status', 
-      label: 'Status', 
-      sortable: true,
-      render: (value: string) => (
-        <Badge variant={getStatusColor(value) as any} size="sm">
-          {value.charAt(0).toUpperCase() + value.slice(1)}
-        </Badge>
-      )
-    },
-    { key: 'totalParticipants', label: 'Total Participants', sortable: true },
+    { key: 'registrationCount', label: 'Total Participants', sortable: true },
     {
       key: 'actions',
       label: 'Actions',
       render: (value: any, event: Event) => (
         <div className="flex items-center space-x-2">
-          <Button size="sm" variant="secondary" title="View Details">
+          <Button size="sm" variant="secondary" title="View Details" onClick={() => handleViewEvent(event)}>
             <Eye size={16} />
           </Button>
           <Button size="sm" variant="primary" title="Edit Event">
             <Edit size={16} />
           </Button>
-          <Button 
-            size="sm" 
-            variant="success" 
+          <Button
+            size="sm"
+            variant="success"
             title="Manage Races"
             onClick={() => {
               setSelectedEvent(event);
@@ -104,54 +138,54 @@ const Events: React.FC = () => {
           <Button size="sm" variant="warning" title="View Results">
             <Trophy size={16} />
           </Button>
-          <Button size="sm" variant="danger" title="Delete Event">
+          <Button onClick={()=>handleDelete(event?.id)} size="sm" variant="danger" title="Delete Event">
             <Trash2 size={16} />
           </Button>
         </div>
-      )
-    }
+      ),
+    },
   ];
 
   const schedulesColumns = [
     { key: 'raceName', label: 'Race Name', sortable: true },
     { key: 'ageGroupName', label: 'Age Group', sortable: true },
-    { 
-      key: 'category', 
-      label: 'Category', 
+    {
+      key: 'category',
+      label: 'Category',
       sortable: true,
       render: (value: string) => (
         <Badge variant="default" size="sm">
           {value.charAt(0).toUpperCase() + value.slice(1)}
         </Badge>
-      )
+      ),
     },
-    { 
-      key: 'scheduledTime', 
+    {
+      key: 'scheduledTime',
       label: 'Scheduled Time',
-      render: (value: string) => new Date(value).toLocaleString()
+      render: (value: string) => new Date(value).toLocaleString(),
     },
-    { 
-      key: 'participants', 
+    {
+      key: 'registrationCount',
       label: 'Participants',
-      render: (value: any[]) => value.length
+      render: (value: any[]) => value.length,
     },
-    { 
-      key: 'resultsEntered', 
+    {
+      key: 'resultsEntered',
       label: 'Results',
       render: (value: boolean) => (
         <Badge variant={value ? 'success' : 'warning'} size="sm">
           {value ? 'Entered' : 'Pending'}
         </Badge>
-      )
+      ),
     },
     {
       key: 'actions',
       label: 'Actions',
       render: (value: any, schedule: Schedule) => (
         <div className="flex items-center space-x-2">
-          <Button 
-            size="sm" 
-            variant="primary" 
+          <Button
+            size="sm"
+            variant="primary"
             title="Enter Results"
             onClick={() => {
               setSelectedSchedule(schedule);
@@ -167,8 +201,8 @@ const Events: React.FC = () => {
             <Trash2 size={16} />
           </Button>
         </div>
-      )
-    }
+      ),
+    },
   ];
 
   const renderEventsView = () => (
@@ -178,7 +212,7 @@ const Events: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-900">Events Management</h1>
           <p className="text-gray-600 mt-1">Manage sports events and competitions</p>
         </div>
-        <Button variant="primary" onClick={() => setShowCreateModal(true)}>
+        <Button variant="primary" onClick={handleOpenCreateModal}>
           <Plus size={16} className="mr-2" />
           Create New Event
         </Button>
@@ -285,31 +319,28 @@ const Events: React.FC = () => {
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveView('events')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-              activeView === 'events'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
+            className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeView === 'events'
+              ? 'border-blue-500 text-blue-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
           >
             All Events
           </button>
           <button
             onClick={() => setActiveView('schedules')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-              activeView === 'schedules'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
+            className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeView === 'schedules'
+              ? 'border-blue-500 text-blue-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
           >
             Race Schedules
           </button>
           <button
             onClick={() => setActiveView('results')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-              activeView === 'results'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
+            className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeView === 'results'
+              ? 'border-blue-500 text-blue-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
           >
             Results & Rankings
           </button>
@@ -324,8 +355,14 @@ const Events: React.FC = () => {
       {/* Modals */}
       <CreateEventModal
         isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
+        onClose={() => {
+          setShowCreateModal(false);
+          setSelectedEvent(null);
+          setModalMode('create');
+        }}
         onSave={handleCreateEvent}
+        modalMode={modalMode}
+        initialEvent={selectedEvent}
       />
 
       {selectedEvent && (
@@ -335,7 +372,7 @@ const Events: React.FC = () => {
             setShowScheduleModal(false);
             setSelectedEvent(null);
           }}
-          event={selectedEvent}
+          event={selectedEvent as Event}
           onSave={handleCreateSchedule}
         />
       )}

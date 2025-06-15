@@ -1,25 +1,47 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Check, X, Eye, Edit } from 'lucide-react';
 import Table from '../../components/UI/Table';
 import Button from '../../components/UI/Button';
 import Badge from '../../components/UI/Badge';
 import Card from '../../components/UI/Card';
-import { mockPlayers } from '../../data/mockData';
 import { Player } from '../../types';
+import axios from 'axios';
 
+const baseURL = import.meta.env.VITE_API_BASE_URL;
 const PlayersApproval: React.FC = () => {
-  const [pendingPlayers, setPendingPlayers] = React.useState<Player[]>(
-    mockPlayers.filter(p => !p.approved)
-  );
 
-  const handleApprove = (playerId: string) => {
-    setPendingPlayers(prev => prev.filter(p => p.id !== playerId));
-    // In real app, would make API call to approve
+  // approvalStatus
+  const [pendingPlayers, setPendingPlayers] = React.useState<any>([]);
+
+  const handleApprove = async (playerId: string) => {
+    try {
+      await axios.put(`${baseURL}/players/${playerId}/approve`);
+      fetchPlayers(); // Refresh the pending players list
+    } catch (error) {
+      console.error(`Failed to approve player ${playerId}:`, error);
+    }
   };
 
   const handleReject = (playerId: string) => {
-    setPendingPlayers(prev => prev.filter(p => p.id !== playerId));
+    setPendingPlayers((prev: any) => prev.filter((p: any) => p.id !== playerId));
     // In real app, would make API call to reject
+  };
+
+  useEffect(() => {
+    fetchPlayers();
+  }, []);
+
+  const fetchPlayers = async () => {
+    try {
+      const response = await axios.get(`${baseURL}/players/`);
+      console.log(response, "Fetched players");
+
+      // ✅ Filter only players with approvalStatus 'pending'
+      const pending = response.data.filter((player: any) => player?.approvalStatus === 'pending');
+      setPendingPlayers(pending);
+    } catch (error) {
+      console.error('Failed to fetch players:', error);
+    }
   };
 
   const calculateAge = (dateOfBirth: string) => {
@@ -37,39 +59,40 @@ const PlayersApproval: React.FC = () => {
     { key: 'playerId', label: 'Player ID' },
     { key: 'name', label: 'Name' },
     { key: 'email', label: 'Email' },
-    { 
-      key: 'dateOfBirth', 
+    {
+      key: 'dob',
       label: 'Age',
+      sortable: true,
       render: (value: string) => calculateAge(value)
     },
-    { 
-      key: 'gender', 
+    {
+      key: 'gender',
       label: 'Gender',
       render: (value: string) => (
         <Badge variant="info" size="sm">
-          {value.charAt(0).toUpperCase() + value.slice(1)}
+          {value?.charAt(0).toUpperCase() + value?.slice(1)}
         </Badge>
       )
     },
     { key: 'clubName', label: 'Club' },
-    { 
-      key: 'category', 
+    {
+      key: 'skateCategory',
       label: 'Category',
       render: (value: string) => (
         <Badge variant="default" size="sm">
-          {value.charAt(0).toUpperCase() + value.slice(1)}
+          {value?.charAt(0).toUpperCase() + value?.slice(1)}
         </Badge>
       )
     },
-    { 
-      key: 'createdAt', 
+    {
+      key: 'createdAt',
       label: 'Applied Date',
       render: (value: string) => new Date(value).toLocaleDateString()
     },
     {
       key: 'actions',
       label: 'Actions',
-      render: (value: any, player: Player) => (
+      render: (value: any, player: any) => (
         <div className="flex items-center space-x-2">
           <Button size="sm" variant="secondary">
             <Eye size={16} />
@@ -77,17 +100,17 @@ const PlayersApproval: React.FC = () => {
           <Button size="sm" variant="primary">
             <Edit size={16} />
           </Button>
-          <Button 
-            size="sm" 
+          <Button
+            size="sm"
             variant="success"
-            onClick={() => handleApprove(player.id)}
+            onClick={() => handleApprove(player.playerId)}
           >
             <Check size={16} />
           </Button>
-          <Button 
-            size="sm" 
+          <Button
+            size="sm"
             variant="danger"
-            onClick={() => handleReject(player.id)}
+            onClick={() => handleReject(player.playerId)}
           >
             <X size={16} />
           </Button>

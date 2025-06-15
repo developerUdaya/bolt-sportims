@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Edit, Trash2, Eye, Plus, FileText, CheckCircle, XCircle } from 'lucide-react';
 import Table from '../../components/UI/Table';
 import Button from '../../components/UI/Button';
@@ -6,42 +6,81 @@ import Badge from '../../components/UI/Badge';
 import Card from '../../components/UI/Card';
 import Modal from '../../components/UI/Modal';
 import FormField from '../../components/UI/FormField';
-import { mockStates } from '../../data/mockData';
-import { State } from '../../types';
+import axios from 'axios';
+import { useLocation } from '../../context/LocationContext';
+import ImageUpload from '../../components/UI/ImageUpload';
+
+interface StateSecretary {
+  stateSecretaryId?: string;
+  secretaryName: string;
+  password?: string;
+  stateId: number;
+  mobileNumber: string;
+  email: string;
+  societyCertificateNumber: string;
+  aadharNumber: string;
+  certificateUrl: string;
+  address: string;
+  approvalStatus?: 'approved' | 'pending';
+  stateName?: string;
+}
 
 const States: React.FC = () => {
-  const [states, setStates] = React.useState<State[]>(mockStates);
-  const [filteredStates, setFilteredStates] = React.useState<State[]>(states);
+  const baseURL = import.meta.env.VITE_API_BASE_URL;
+  const { states, loading } = useLocation();
+
+  const [stateSecretaries, setStateSecretaries] = React.useState<StateSecretary[]>([]);
+  const [filteredSecretaries, setFilteredSecretaries] = React.useState<StateSecretary[]>([]);
   const [sortBy, setSortBy] = React.useState<string>('');
   const [sortOrder, setSortOrder] = React.useState<'asc' | 'desc'>('asc');
   const [showModal, setShowModal] = React.useState(false);
   const [showDocumentModal, setShowDocumentModal] = React.useState(false);
-  const [selectedState, setSelectedState] = React.useState<State | null>(null);
+  const [selectedSecretary, setSelectedSecretary] = React.useState<StateSecretary | null>(null);
   const [modalMode, setModalMode] = React.useState<'create' | 'edit' | 'view'>('create');
   const [statusFilter, setStatusFilter] = React.useState<string>('all');
 
-  const [formData, setFormData] = React.useState({
-    name: '',
-    stateCode: '',
-    capital: '',
-    population: '',
-    area: '',
+  const [formData, setFormData] = React.useState<Partial<StateSecretary>>({
+    secretaryName: '',
+    password: '',
+    stateId: undefined,
+    mobileNumber: '',
     email: '',
-    phone: '',
-    approved: false
+    societyCertificateNumber: '',
+    aadharNumber: '',
+    certificateUrl: '',
+    address: '',
+    approvalStatus: 'pending',
   });
 
-  React.useEffect(() => {
-    let filtered = states;
-    
+  useEffect(() => {
+    fetchSecretaries();
+  }, []);
+
+  const fetchSecretaries = async () => {
+    try {
+      const response = await axios.get(`${baseURL}/state_secretaries/`);
+      console.log('Fetched secretaries:', response.data); // Debug
+
+      setStateSecretaries(response.data);
+      setFilteredSecretaries(response.data);
+    } catch (error) {
+      console.error('Failed to fetch state secretaries:', error);
+    }
+  };
+
+  useEffect(() => {
+    let filtered = [...stateSecretaries];
+    console.log('Applying status filter:', statusFilter); // Debug
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(state => 
-        statusFilter === 'approved' ? state.approved : !state.approved
+      filtered = filtered.filter((secretary) =>
+        statusFilter === 'approved'
+          ? secretary.approvalStatus === 'approved'
+          : secretary.approvalStatus === 'pending'
       );
     }
-    
-    setFilteredStates(filtered);
-  }, [states, statusFilter]);
+    console.log('Filtered secretaries:', filtered); // Debug
+    setFilteredSecretaries(filtered);
+  }, [stateSecretaries, statusFilter]);
 
   const handleSort = (key: string) => {
     if (sortBy === key) {
@@ -51,204 +90,254 @@ const States: React.FC = () => {
       setSortOrder('asc');
     }
 
-    const sorted = [...filteredStates].sort((a, b) => {
-      const aValue = a[key as keyof State];
-      const bValue = b[key as keyof State];
-      
+    const sorted = [...filteredSecretaries].sort((a, b) => {
+      const aValue = a[key as keyof StateSecretary] as any;
+      const bValue = b[key as keyof StateSecretary] as any;
+
       if (sortOrder === 'asc') {
         return aValue > bValue ? 1 : -1;
       } else {
         return aValue < bValue ? 1 : -1;
       }
     });
-    
-    setFilteredStates(sorted);
+    setFilteredSecretaries(sorted);
   };
 
   const handleSearch = (query: string) => {
-    let filtered = states.filter(state =>
-      state.name.toLowerCase().includes(query.toLowerCase()) ||
-      state.stateCode.toLowerCase().includes(query.toLowerCase()) ||
-      state.capital.toLowerCase().includes(query.toLowerCase()) ||
-      state.email.toLowerCase().includes(query.toLowerCase())
+    let filtered = stateSecretaries.filter((secretary) =>
+      secretary.secretaryName.toLowerCase().includes(query.toLowerCase()) ||
+      secretary.email.toLowerCase().includes(query.toLowerCase()) ||
+      secretary.mobileNumber.toLowerCase().includes(query.toLowerCase()) ||
+      (secretary.stateName?.toLowerCase().includes(query.toLowerCase()) || '')
     );
 
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(state => 
-        statusFilter === 'approved' ? state.approved : !state.approved
+      filtered = filtered.filter((secretary) =>
+        statusFilter === 'approved'
+          ? secretary.approvalStatus === 'approved'
+          : secretary.approvalStatus === 'pending'
       );
     }
 
-    setFilteredStates(filtered);
+    setFilteredSecretaries(filtered);
   };
 
-  const handleCreateState = () => {
-    setSelectedState(null);
+  const handleCreateSecretary = () => {
+    setSelectedSecretary(null);
     setModalMode('create');
     setFormData({
-      name: '',
-      stateCode: '',
-      capital: '',
-      population: '',
-      area: '',
+      secretaryName: '',
+      password: '',
+      stateId: undefined,
+      mobileNumber: '',
       email: '',
-      phone: '',
-      approved: false
+      societyCertificateNumber: '',
+      aadharNumber: '',
+      certificateUrl: '',
+      address: '',
+      approvalStatus: 'pending',
     });
     setShowModal(true);
   };
 
-  const handleViewState = (state: State) => {
-    setSelectedState(state);
+  const handleViewSecretary = (secretary: StateSecretary) => {
+    console.log('View secretary:', secretary); // Debug
+    setSelectedSecretary(secretary);
     setModalMode('view');
     setFormData({
-      name: state.name,
-      stateCode: state.stateCode,
-      capital: state.capital,
-      population: state.population.toString(),
-      area: state.area.toString(),
-      email: state.email,
-      phone: state.phone,
-      approved: state.approved
+      secretaryName: secretary.secretaryName,
+      password: secretary.password,
+      stateId: secretary.stateId,
+      mobileNumber: secretary.mobileNumber,
+      email: secretary.email,
+      societyCertificateNumber: secretary.societyCertificateNumber,
+      aadharNumber: secretary.aadharNumber,
+      certificateUrl: secretary.certificateUrl,
+      address: secretary.address,
+      approvalStatus: secretary.approvalStatus,
     });
     setShowModal(true);
   };
 
-  const handleEditState = (state: State) => {
-    setSelectedState(state);
+  const handleEditSecretary = (secretary: StateSecretary) => {
+    console.log('Edit secretary:', secretary); // Debug
+    setSelectedSecretary(secretary);
     setModalMode('edit');
     setFormData({
-      name: state.name,
-      stateCode: state.stateCode,
-      capital: state.capital,
-      population: state.population.toString(),
-      area: state.area.toString(),
-      email: state.email,
-      phone: state.phone,
-      approved: state.approved
+      secretaryName: secretary.secretaryName,
+      password: secretary.password,
+      stateId: secretary.stateId,
+      mobileNumber: secretary.mobileNumber,
+      email: secretary.email,
+      societyCertificateNumber: secretary.societyCertificateNumber,
+      aadharNumber: secretary.aadharNumber,
+      certificateUrl: secretary.certificateUrl,
+      address: secretary.address,
+      approvalStatus: secretary.approvalStatus,
     });
     setShowModal(true);
   };
 
-  const handleDeleteState = (stateId: string) => {
-    if (confirm('Are you sure you want to delete this state?')) {
-      setStates(prev => prev.filter(s => s.id !== stateId));
+  const handleDeleteSecretary = async (stateSecretaryId: string) => {
+    if (confirm('Are you sure you want to delete this state secretary?')) {
+      try {
+        await axios.delete(`${baseURL}/state_secretaries/${stateSecretaryId}`);
+        fetchSecretaries();
+      } catch (error) {
+        console.error('Failed to delete state secretary:', error);
+        alert('Failed to delete state secretary. Please try again.');
+      }
     }
   };
 
-  const handleApproveState = (stateId: string) => {
-    setStates(prev => prev.map(s => 
-      s.id === stateId ? { ...s, approved: true } : s
-    ));
-  };
-
-  const handleRejectState = (stateId: string) => {
-    if (confirm('Are you sure you want to reject this state registration?')) {
-      setStates(prev => prev.filter(s => s.id !== stateId));
+  const handleApproveSecretary = async (stateSecretaryId: string) => {
+    try {
+      await axios.put(`${baseURL}/state_secretaries/${stateSecretaryId}`, { approvalStatus: 'approved' });
+      setStateSecretaries((prev) =>
+        prev.map((s) =>
+          s.stateSecretaryId === stateSecretaryId ? { ...s, approvalStatus: 'approved' } : s
+        )
+      );
+      setFilteredSecretaries((prev) =>
+        prev.map((s) =>
+          s.stateSecretaryId === stateSecretaryId ? { ...s, approvalStatus: 'approved' } : s
+        )
+      );
+    } catch (error) {
+      console.error('Failed to approve state secretary:', error);
+      alert('Failed to approve state secretary. Please try again.');
     }
   };
 
-  const handleViewDocuments = (state: State) => {
-    setSelectedState(state);
+  const handleRejectSecretary = async (stateSecretaryId: string) => {
+    if (confirm('Are you sure you want to reject this state secretary registration?')) {
+      try {
+        await axios.delete(`${baseURL}/state_secretaries/${stateSecretaryId}`);
+        fetchSecretaries();
+      } catch (error) {
+        console.error('Failed to reject state secretary:', error);
+        alert('Failed to reject state secretary. Please try again.');
+      }
+    }
+  };
+
+  const handleViewDocuments = (secretary: StateSecretary) => {
+    setSelectedSecretary(secretary);
     setShowDocumentModal(true);
   };
 
-  const handleSaveState = (e: React.FormEvent) => {
+  const handleSaveSecretary = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (modalMode === 'create') {
-      const newState: State = {
-        id: `S${Date.now()}`,
-        stateId: `S${Date.now()}`,
-        name: formData.name,
-        stateCode: formData.stateCode,
-        capital: formData.capital,
-        population: parseInt(formData.population) || 0,
-        area: parseInt(formData.area) || 0,
-        email: formData.email,
-        phone: formData.phone,
-        dateOfBirth: new Date().toISOString().split('T')[0],
-        gender: 'other',
-        approved: formData.approved,
-        createdAt: new Date().toISOString()
-      };
-      setStates(prev => [...prev, newState]);
-    } else if (modalMode === 'edit' && selectedState) {
-      setStates(prev => prev.map(s => 
-        s.id === selectedState.id ? {
-          ...s,
-          name: formData.name,
-          stateCode: formData.stateCode,
-          capital: formData.capital,
-          population: parseInt(formData.population) || 0,
-          area: parseInt(formData.area) || 0,
-          email: formData.email,
-          phone: formData.phone,
-          approved: formData.approved
-        } : s
-      ));
+    console.log('Form Data:', formData); // Debug
+
+    const payload = {
+      secretaryName: formData.secretaryName,
+      password: formData.password,
+      stateId: formData.stateId,
+      mobileNumber: formData.mobileNumber,
+      email: formData.email,
+      societyCertificateNumber: formData.societyCertificateNumber,
+      aadharNumber: formData.aadharNumber,
+      certificateUrl: formData.certificateUrl,
+      address: formData.address,
+      approvalStatus: formData.approvalStatus,
+    };
+
+    try {
+      if (modalMode === 'create') {
+        await axios.post(`${baseURL}/state_secretaries/register`, payload);
+        fetchSecretaries();
+      } else if (modalMode === 'edit' && selectedSecretary) {
+        await axios.put(`${baseURL}/state_secretaries/${selectedSecretary.stateSecretaryId}`, payload);
+        fetchSecretaries();
+      }
+      setShowModal(false);
+    } catch (error) {
+      console.error('Error saving state secretary:', error);
+      alert('Failed to save state secretary. Please try again.');
     }
-    
-    setShowModal(false);
   };
 
   const columns = [
-    { key: 'stateCode', label: 'State Code', sortable: true },
-    { key: 'name', label: 'State Name', sortable: true },
-    { key: 'capital', label: 'Capital', sortable: true },
-    { 
-      key: 'population', 
-      label: 'Population', 
+    { key: 'secretaryName', label: 'Secretary Name', sortable: true },
+    {
+      key: 'stateName',
+      label: 'State',
       sortable: true,
-      render: (value: number) => value.toLocaleString()
-    },
-    { 
-      key: 'area', 
-      label: 'Area (sq km)', 
-      sortable: true,
-      render: (value: number) => value.toLocaleString()
+      render: (value: string) => value || 'N/A',
     },
     { key: 'email', label: 'Email', sortable: true },
-    { 
-      key: 'approved', 
-      label: 'Status', 
+    { key: 'mobileNumber', label: 'Phone', sortable: true },
+    {
+      key: 'approvalStatus',
+      label: 'Status',
       sortable: true,
-      render: (value: boolean) => (
-        <Badge variant={value ? 'success' : 'warning'} size="sm">
-          {value ? 'Approved' : 'Pending'}
+      render: (value: string) => (
+        <Badge variant={value === 'approved' ? 'success' : 'warning'} size="sm">
+          {value === 'approved' ? 'Approved' : 'Pending'}
         </Badge>
-      )
+      ),
     },
     {
       key: 'actions',
       label: 'Actions',
-      render: (value: any, state: State) => (
+      render: (value: any, secretary: StateSecretary) => (
         <div className="flex items-center space-x-2">
-          <Button size="sm" variant="secondary" onClick={() => handleViewState(state)} title="View Details">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => handleViewSecretary(secretary)}
+            title="View Details"
+          >
             <Eye size={16} />
           </Button>
-          <Button size="sm" variant="primary" onClick={() => handleEditState(state)} title="Edit State">
+          <Button
+            size="sm"
+            variant="primary"
+            onClick={() => handleEditSecretary(secretary)}
+            title="Edit Secretary"
+          >
             <Edit size={16} />
           </Button>
-          <Button size="sm" variant="secondary" onClick={() => handleViewDocuments(state)} title="View Documents">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => handleViewDocuments(secretary)}
+            title="View Documents"
+          >
             <FileText size={16} />
           </Button>
-          {!state.approved && (
+          {secretary.approvalStatus !== 'approved' && (
             <>
-              <Button size="sm" variant="success" onClick={() => handleApproveState(state.id)} title="Approve">
+              <Button
+                size="sm"
+                variant="success"
+                onClick={() => handleApproveSecretary(secretary.stateSecretaryId!)}
+                title="Approve"
+              >
                 <CheckCircle size={16} />
               </Button>
-              <Button size="sm" variant="danger" onClick={() => handleRejectState(state.id)} title="Reject">
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={() => handleRejectSecretary(secretary.stateSecretaryId!)}
+                title="Reject"
+              >
                 <XCircle size={16} />
               </Button>
             </>
           )}
-          <Button size="sm" variant="danger" onClick={() => handleDeleteState(state.id)} title="Delete">
+          <Button
+            size="sm"
+            variant="danger"
+            onClick={() => handleDeleteSecretary(secretary.stateSecretaryId!)}
+            title="Delete"
+          >
             <Trash2 size={16} />
           </Button>
         </div>
-      )
-    }
+      ),
+    },
   ];
 
   const isReadOnly = modalMode === 'view';
@@ -257,12 +346,12 @@ const States: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">States Management</h1>
-          <p className="text-gray-600 mt-1">Manage state registrations and approvals</p>
+          <h1 className="text-2xl font-bold text-gray-900">State Secretaries Management</h1>
+          <p className="text-gray-600 mt-1">Manage state secretary registrations and approvals</p>
         </div>
-        <Button variant="primary" onClick={handleCreateState}>
+        <Button variant="primary" onClick={handleCreateSecretary}>
           <Plus size={16} className="mr-2" />
-          Add New State
+          Add New State Secretary
         </Button>
       </div>
 
@@ -270,19 +359,23 @@ const States: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">{states.length}</div>
-            <div className="text-sm text-gray-600">Total States</div>
+            <div className="text-2xl font-bold text-gray-900">{stateSecretaries.length}</div>
+            <div className="text-sm text-gray-600">Total Secretaries</div>
           </div>
         </Card>
         <Card>
           <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">{states.filter(s => s.approved).length}</div>
+            <div className="text-2xl font-bold text-green-600">
+              {stateSecretaries.filter((s) => s.approvalStatus === 'approved').length}
+            </div>
             <div className="text-sm text-gray-600">Approved</div>
           </div>
         </Card>
         <Card>
           <div className="text-center">
-            <div className="text-2xl font-bold text-yellow-600">{states.filter(s => !s.approved).length}</div>
+            <div className="text-2xl font-bold text-yellow-600">
+              {stateSecretaries.filter((s) => s.approvalStatus === 'pending').length}
+            </div>
             <div className="text-sm text-gray-600">Pending Approval</div>
           </div>
         </Card>
@@ -294,18 +387,17 @@ const States: React.FC = () => {
           <span className="text-sm font-medium text-gray-700">Filter by Status:</span>
           <div className="flex space-x-2">
             {[
-              { value: 'all', label: 'All States' },
+              { value: 'all', label: 'All Secretaries' },
               { value: 'approved', label: 'Approved' },
-              { value: 'pending', label: 'Pending' }
-            ].map(status => (
+              { value: 'pending', label: 'Pending' },
+            ].map((status) => (
               <button
                 key={status.value}
                 onClick={() => setStatusFilter(status.value)}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                  statusFilter === status.value
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${statusFilter === status.value
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
               >
                 {status.label}
               </button>
@@ -317,9 +409,9 @@ const States: React.FC = () => {
       <Card>
         <Table
           columns={columns}
-          data={filteredStates}
+          data={filteredSecretaries}
           searchable
-          searchPlaceholder="Search states..."
+          searchPlaceholder="Search secretaries..."
           onSearch={handleSearch}
           sortBy={sortBy}
           sortOrder={sortOrder}
@@ -331,74 +423,58 @@ const States: React.FC = () => {
       <Modal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        title={`${modalMode === 'create' ? 'Add New' : modalMode === 'edit' ? 'Edit' : 'View'} State`}
+        title={`${modalMode === 'create' ? 'Add New' : modalMode === 'edit' ? 'Edit' : 'View'} State Secretary`}
         size="xl"
       >
-        <form onSubmit={handleSaveState} className="space-y-6">
+        <form onSubmit={handleSaveSecretary} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField label="State Name" required>
+            <FormField label="Secretary Name" required>
               <input
                 type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                value={formData.secretaryName || ''}
+                onChange={(e) => setFormData({ ...formData, secretaryName: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter state name"
+                placeholder="Enter secretary name"
                 required
                 readOnly={isReadOnly}
               />
             </FormField>
 
-            <FormField label="State Code" required>
-              <input
-                type="text"
-                value={formData.stateCode}
-                onChange={(e) => setFormData({ ...formData, stateCode: e.target.value.toUpperCase() })}
+            {modalMode === 'create' && (
+              <FormField label="Password" required>
+                <input
+                  type="password"
+                  value={formData.password || ''}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter password"
+                  required
+                  readOnly={isReadOnly}
+                />
+              </FormField>
+            )}
+
+            <FormField label="State" required>
+              <select
+                value={formData.stateId || ''}
+                onChange={(e) => setFormData({ ...formData, stateId: parseInt(e.target.value) })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter state code"
-                maxLength={2}
                 required
-                readOnly={isReadOnly}
-              />
-            </FormField>
-
-            <FormField label="Capital City" required>
-              <input
-                type="text"
-                value={formData.capital}
-                onChange={(e) => setFormData({ ...formData, capital: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter capital city"
-                required
-                readOnly={isReadOnly}
-              />
-            </FormField>
-
-            <FormField label="Population">
-              <input
-                type="number"
-                value={formData.population}
-                onChange={(e) => setFormData({ ...formData, population: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter population"
-                readOnly={isReadOnly}
-              />
-            </FormField>
-
-            <FormField label="Area (sq km)">
-              <input
-                type="number"
-                value={formData.area}
-                onChange={(e) => setFormData({ ...formData, area: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter area"
-                readOnly={isReadOnly}
-              />
+                disabled={isReadOnly || loading}
+              >
+                <option value="">Select State</option>
+                {states?.map((state) => (
+                  <option key={state.id} value={state.id}>
+                    {state.name}
+                  </option>
+                ))}
+              </select>
             </FormField>
 
             <FormField label="Email Address" required>
               <input
                 type="email"
-                value={formData.email}
+                value={formData.email || ''}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Enter email address"
@@ -407,13 +483,57 @@ const States: React.FC = () => {
               />
             </FormField>
 
-            <FormField label="Phone Number" required>
+            <FormField label="Mobile Number" required>
               <input
                 type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                value={formData.mobileNumber || ''}
+                onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter phone number"
+                placeholder="Enter mobile number"
+                required
+                readOnly={isReadOnly}
+              />
+            </FormField>
+
+            <FormField label="Society Certificate Number" required>
+              <input
+                type="text"
+                value={formData.societyCertificateNumber || ''}
+                onChange={(e) => setFormData({ ...formData, societyCertificateNumber: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter society certificate number"
+                required
+                readOnly={isReadOnly}
+              />
+            </FormField>
+
+            <FormField label="Aadhar Number" required>
+              <input
+                type="text"
+                value={formData.aadharNumber || ''}
+                onChange={(e) => setFormData({ ...formData, aadharNumber: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter Aadhar number"
+                required
+                readOnly={isReadOnly}
+              />
+            </FormField>
+
+            <ImageUpload
+              label="Certificate Image"
+              value={formData.certificateUrl}
+              onChange={(url) => setFormData({ ...formData, certificateUrl: url })}
+              readOnly={isReadOnly}
+              uploadUrl={`${baseURL}/upload/image`}
+            />
+
+            <FormField label="Address" required>
+              <input
+                type="text"
+                value={formData.address || ''}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter address"
                 required
                 readOnly={isReadOnly}
               />
@@ -425,12 +545,17 @@ const States: React.FC = () => {
               <input
                 type="checkbox"
                 id="approved"
-                checked={formData.approved}
-                onChange={(e) => setFormData({ ...formData, approved: e.target.checked })}
+                checked={formData.approvalStatus === 'approved'}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    approvalStatus: e.target.checked ? 'approved' : 'pending',
+                  })
+                }
                 className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
               />
               <label htmlFor="approved" className="ml-2 text-sm text-gray-700">
-                Approve state registration
+                Approve state secretary registration
               </label>
             </div>
           )}
@@ -441,7 +566,7 @@ const States: React.FC = () => {
             </Button>
             {modalMode !== 'view' && (
               <Button type="submit">
-                {modalMode === 'create' ? 'Create State' : 'Update State'}
+                {modalMode === 'create' ? 'Create Secretary' : 'Update Secretary'}
               </Button>
             )}
           </div>
@@ -452,44 +577,36 @@ const States: React.FC = () => {
       <Modal
         isOpen={showDocumentModal}
         onClose={() => setShowDocumentModal(false)}
-        title={`Documents - ${selectedState?.name}`}
+        title={`Documents - ${selectedSecretary?.secretaryName}`}
         size="lg"
       >
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="border border-gray-200 rounded-lg p-4">
-              <h4 className="font-medium text-gray-900 mb-2">Government Authorization</h4>
-              <div className="text-sm text-gray-600 mb-3">Official state government authorization</div>
-              <Button size="sm" variant="secondary">
-                <FileText size={16} className="mr-2" />
-                View Document
-              </Button>
+              <h4 className="font-medium text-gray-900 mb-2">Society Certificate</h4>
+              <div className="text-sm text-gray-600 mb-3">
+                Certificate Number: {selectedSecretary?.societyCertificateNumber || 'N/A'}
+              </div>
+              {selectedSecretary?.certificateUrl && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => window.open(selectedSecretary.certificateUrl, '_blank')}
+                >
+                  <FileText size={16} className="mr-2" />
+                  View Certificate
+                </Button>
+              )}
             </div>
 
             <div className="border border-gray-200 rounded-lg p-4">
-              <h4 className="font-medium text-gray-900 mb-2">Sports Department Order</h4>
-              <div className="text-sm text-gray-600 mb-3">Sports department establishment order</div>
-              <Button size="sm" variant="secondary">
+              <h4 className="font-medium text-gray-900 mb-2">Aadhar Document</h4>
+              <div className="text-sm text-gray-600 mb-3">
+                Aadhar Number: {selectedSecretary?.aadharNumber || 'N/A'}
+              </div>
+              <Button size="sm" variant="secondary" disabled>
                 <FileText size={16} className="mr-2" />
-                View Document
-              </Button>
-            </div>
-
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h4 className="font-medium text-gray-900 mb-2">Sports Policy</h4>
-              <div className="text-sm text-gray-600 mb-3">State sports policy document</div>
-              <Button size="sm" variant="secondary">
-                <FileText size={16} className="mr-2" />
-                View Document
-              </Button>
-            </div>
-
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h4 className="font-medium text-gray-900 mb-2">Infrastructure List</h4>
-              <div className="text-sm text-gray-600 mb-3">State sports facilities and infrastructure</div>
-              <Button size="sm" variant="secondary">
-                <FileText size={16} className="mr-2" />
-                View Document
+                View Aadhar (Not Available)
               </Button>
             </div>
           </div>
