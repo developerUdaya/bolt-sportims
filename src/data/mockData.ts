@@ -1,4 +1,4 @@
-import { Player, Club, District, State, Admin, Event, DashboardStats, Race, AgeGroup, RaceMatrix, Schedule, ScheduledPlayer, PlayerResult } from '../types';
+import { Player, Club, District, State, Admin, Event, DashboardStats, Race, AgeGroup, Schedule, PlayerResult, Payment, EventOfficialType, EventOrganiserType } from '../types';
 
 export const mockPlayers: Player[] = [
   {
@@ -104,6 +104,7 @@ export const mockClubs: Club[] = [
     state: 'California',
     establishedYear: 2020,
     contactPerson: 'John Thunder'
+
   },
   {
     id: 'C002',
@@ -120,7 +121,23 @@ export const mockClubs: Club[] = [
     state: 'California',
     establishedYear: 2019,
     contactPerson: 'Maria Speed'
-  }
+  },
+  {
+    id: 'C003',
+    clubId: 'C003',
+    name: 'Royal Speed Club',
+    email: 'contact@royalspeed.com',
+    phone: '+1234567901',
+    dateOfBirth: '2019-06-15',
+    gender: 'other',
+    approved: false,
+    createdAt: '2019-06-15',
+    registrationNumber: 'SD2019001',
+    district: 'North District',
+    state: 'California',
+    establishedYear: 2019,
+    contactPerson: 'Maria Speed'
+  },
 ];
 
 export const mockDistricts: District[] = [
@@ -153,6 +170,21 @@ export const mockDistricts: District[] = [
     state: 'California',
     population: 750000,
     area: 1800
+  },
+  {
+    id: 'D003',
+    districtId: 'D003',
+    name: 'West District',
+    email: 'admin@north.gov',
+    phone: '+1234567911',
+    dateOfBirth: '1948-01-01',
+    gender: 'other',
+    approved: false,
+    createdAt: '1948-01-01',
+    districtCode: 'ND',
+    state: 'California',
+    population: 750000,
+    area: 1800
   }
 ];
 
@@ -166,6 +198,21 @@ export const mockStates: State[] = [
     dateOfBirth: '1850-01-01',
     gender: 'other',
     approved: true,
+    createdAt: '1850-01-01',
+    stateCode: 'CA',
+    capital: 'Sacramento',
+    population: 39538223,
+    area: 423967
+  },
+  {
+    id: 'S002',
+    stateId: 'S002',
+    name: 'State of California',
+    email: 'admin@statecal.gov',
+    phone: '+1234567920',
+    dateOfBirth: '1850-01-01',
+    gender: 'other',
+    approved: false,
     createdAt: '1850-01-01',
     stateCode: 'CA',
     capital: 'Sacramento',
@@ -324,3 +371,186 @@ export const mockDashboardStats: DashboardStats = {
     return daysUntilBirthday >= 0 && daysUntilBirthday <= 30;
   })
 };
+
+export const mockParticipants = [
+  {
+    id: 'TNNA0001',
+    name: 'Skater1',
+    chestNumber: 'CH000',
+    eventName: 'Madurai Event',
+    age: 15,
+    dob: '13-06-2010',
+    category: 'Beginner',
+    status: 'Unpaid',
+    amount: 0,
+  },
+  {
+    id: 'TNNA0010',
+    name: 'Skater10',
+    chestNumber: 'CH009',
+    eventName: 'Madurai Event',
+    age: 15,
+    dob: '13-06-2010',
+    category: 'Beginner',
+    status: 'Paid',
+    amount: 200,
+  }
+];
+
+export const mockPayments: Payment[] = [
+  {
+    id: 1,
+    eventName: "TEST EVENT",
+    skaterName: "VISHNUVAN",
+    refId: ".324147953485.",
+    amount: 1,
+    date: "29-08-2023",
+    status: "Failure",
+    mode: "Online",
+  },
+  {
+    id: 2,
+    eventName: "CHENNAI SPEED...",
+    skaterName: "KAVIYAZHINI T",
+    refId: ".050899.",
+    amount: 1019,
+    date: "18-11-2023",
+    status: "Success",
+    mode: "Online",
+  }
+];
+
+export const mockEventOfficials: EventOfficialType[] = [
+  {
+    id: "OFF0008",
+    name: "meiyarasan",
+    username: "meisyasnmax",
+    eventId: "EVNT0003",
+    eventName: "Avadi event",
+    status: true,
+    password: "123456",
+  },
+  {
+    id: "OFF0009",
+    name: "kljfksd",
+    username: "kjdlsfkjl",
+    eventId: "EVNT0003",
+    eventName: "Avadi event",
+    status: false,
+    password: "123456",
+  },
+  {
+    id: "OFF0010",
+    name: "qejqwkj``k",
+    username: "kjkjwhfk",
+    eventId: "EVNT0003",
+    eventName: "Avadi event",
+    status: false,
+    password: "123456",
+  },
+  {
+    id: "OFF0011",
+    name: "asdasd",
+    username: "asdasd",
+    eventId: "EVNT0003",
+    eventName: "Avadi event",
+    status: false,
+    password: "123456",
+  },
+  {
+    id: "OFF0012",
+    name: "123456",
+    username: "123456",
+    eventId: "EVNT0003",
+    eventName: "Avadi event",
+    status: false,
+    password: "123456",
+  },
+  {
+    id: "OFF0013",
+    name: "HJJJH",
+    username: "JJHK",
+    eventId: "EVNT0003",
+    eventName: "Avadi event",
+    status: false,
+    password: "123456",
+  },
+  {
+    id: "OFF0014",
+    name: "test off",
+    username: "testoff",
+    eventId: "EVNT0006",
+    eventName: "event test`",
+    status: false,
+    password: "123456",
+  },
+  {
+    id: "OFF0015",
+    name: "adkjhaksd",
+    username: "TESTOFF123",
+    eventId: "EVNT0004",
+    eventName: "Udayakumar …", // Possibly truncated in UI
+    status: false,
+    password: "123456",
+  },
+  {
+    id: "OFF0016",
+    name: "test",
+    username: "testuser",
+    eventId: "EVNT0011",
+    eventName: "Test Evnt Nkl",
+    status: false,
+    password: "123456",
+  },
+  {
+    id: "OFF0017",
+    name: "test off",
+    username: "udaya369",
+    eventId: "EVNT0012",
+    eventName: "chennai test e…", // Possibly truncated
+    status: false,
+    password: "123456",
+  },
+  {
+    id: "OFF0018",
+    name: "Mani Test OFF",
+    username: "Mani123@",
+    eventId: "EVNT0003",
+    eventName: "Avadi event",
+    status: true,
+    password: "123456",
+  },
+  {
+    id: "OFF0019",
+    name: "Mani123@",
+    username: "Mani1234@",
+    eventId: "EVNT0005",
+    eventName: "Test123123",
+    status: false,
+    password: "123456",
+  },
+];
+
+
+export const mockEventOrganiser: EventOrganiserType[] = [
+  {
+    id: 'ORG0001',
+    eventId: "EVNT0005",
+    eventName: "Test123123",
+    name: 'ORG1',
+    username: 'ORG1',
+    password: 'secret',
+    event: '1ST ERODE DISTRICT ROLL...',
+    status: true,
+  },
+  {
+    id: 'ORG0002',
+    name: 'ORG123',
+    eventId: "EVNT0005",
+    eventName: "Test123123",
+    username: 'ORG123',
+    password: 'secret',
+    event: 'Test Event',
+    status: true,
+  },
+];

@@ -16,7 +16,7 @@ interface TableProps {
   onSearch?: (query: string) => void;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
-  onSort?: (key: string) => void;
+  onSort?: any;
 }
 
 const Table: React.FC<TableProps> = ({

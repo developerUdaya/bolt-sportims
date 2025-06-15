@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout/Layout';
 import PlayerLayout from './pages/player/PlayerLayout';
@@ -30,13 +29,20 @@ import ClubPlayers from './pages/club/ClubPlayers';
 import ClubEvents from './pages/club/ClubEvents';
 import ClubReports from './pages/club/ClubReports';
 import ClubProfile from './pages/club/ClubProfile';
+import ClubsApproval from './pages/approvals/ClubsApproval';
+import DistrictsApproval from './pages/approvals/DistrictsApprovals';
+import StatesApproval from './pages/approvals/StatesApproval';
+import EventParticipation from './pages/eventDetails/EventParticipation';
+import PaymentReport from './pages/eventDetails/PaymentReport';
+import EventOfficial from './pages/EventOfficial';
+import EventOrganisers from './pages/EventOrganisers';
 
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/login" element={<Login />} />
-        
+
         {/* Admin Routes */}
         <Route path="/" element={<Layout />}>
           <Route index element={<Dashboard />} />
@@ -46,11 +52,15 @@ function App() {
           <Route path="users/states" element={<States />} />
           <Route path="users/admins" element={<Admins />} />
           <Route path="approvals/players" element={<PlayersApproval />} />
-          <Route path="approvals/clubs" element={<div className="p-8 text-center text-gray-500">Clubs approval coming soon...</div>} />
-          <Route path="approvals/districts" element={<div className="p-8 text-center text-gray-500">Districts approval coming soon...</div>} />
-          <Route path="approvals/states" element={<div className="p-8 text-center text-gray-500">States approval coming soon...</div>} />
+          <Route path="approvals/clubs" element={<ClubsApproval />} />
+          <Route path="approvals/districts" element={<DistrictsApproval />} />
+          <Route path="approvals/states" element={<StatesApproval />} />
           <Route path="events" element={<Events />} />
           <Route path="results" element={<div className="p-8 text-center text-gray-500">Results management coming soon...</div>} />
+          <Route path="/eventsDetails/participation" element={<EventParticipation />} />
+          <Route path="/eventsDetails/payment" element={<PaymentReport />} />
+          <Route path="/eventOfficial" element={<EventOfficial />} />
+          <Route path="/eventOrganisers" element={<EventOrganisers />} />
           <Route path="gallery" element={<Gallery />} />
           <Route path="news" element={<News />} />
           <Route path="settings" element={<div className="p-8 text-center text-gray-500">Settings coming soon...</div>} />

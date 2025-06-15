@@ -12,7 +12,10 @@ import {
   Image,
   Newspaper,
   Settings,
-  ChevronRight
+  ChevronRight,
+  Cog,
+  UserRoundCog,
+  UserSearch
 } from 'lucide-react';
 
 const Sidebar: React.FC = () => {
@@ -42,6 +45,17 @@ const Sidebar: React.FC = () => {
       ]
     },
     { icon: Calendar, label: 'Events', path: '/events' },
+    {
+      icon: Cog,
+      label: 'Events Details',
+      path: '/eventsDetails',
+      submenu: [
+        { label: 'Event Participation', path: '/eventsDetails/participation' },
+        { label: 'Payment Report', path: '/eventsDetails/payment' },
+      ]
+    },
+    { icon: UserRoundCog, label: 'Event Official', path: '/eventOfficial' },
+    { icon: UserSearch, label: 'Event Organisers', path: '/eventOrganisers' },
     { icon: Trophy, label: 'Results', path: '/results' },
     { icon: Image, label: 'Gallery', path: '/gallery' },
     { icon: Newspaper, label: 'News', path: '/news' },
@@ -51,7 +65,7 @@ const Sidebar: React.FC = () => {
   const [expandedMenu, setExpandedMenu] = React.useState<string | null>('/users');
 
   return (
-    <div className="bg-slate-900 text-white w-64 min-h-screen p-4">
+    <div className="bg-slate-900 text-white w-64 min-h-full p-4">
       <div className="mb-8">
         <h1 className="text-xl font-bold text-blue-400">Sports Management</h1>
         <p className="text-slate-400 text-sm">ERP System</p>

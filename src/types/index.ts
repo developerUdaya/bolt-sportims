@@ -151,3 +151,45 @@ export interface DashboardStats {
   upcomingEvents: Event[];
   upcomingBirthdays: Player[];
 }
+export interface Participant {
+  id: string;
+  name: string;
+  chestNumber: string;
+  eventName: string;
+  age: number;
+  dob: string;
+  category: string;
+  status: 'Paid' | 'Unpaid'; // or string if you have more status types
+  amount: number;
+}
+
+export interface Payment {
+  id: number;
+  eventName: string;
+  skaterName: string;
+  refId: string;
+  amount: number;
+  date: string;
+  status: string;
+  mode: string;
+}
+
+export interface EventOfficialType {
+  id: string;
+  name: string;
+  username: string;
+  eventId: string;
+  eventName: string;
+  status: boolean;
+  password?: string; // Optional for create/edit
+}
+export type EventOrganiserType = {
+  id: string;
+  name: string;
+  eventId: string;
+  eventName: string;
+  username: string;
+  password: string;
+  event: string;
+  status: boolean;
+};
