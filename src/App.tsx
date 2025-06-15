@@ -8,6 +8,9 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Players from './pages/users/Players';
 import Clubs from './pages/users/Clubs';
+import Districts from './pages/users/Districts';
+import States from './pages/users/States';
+import Admins from './pages/users/Admins';
 import PlayersApproval from './pages/approvals/PlayersApproval';
 import Events from './pages/Events';
 import Gallery from './pages/Gallery';
@@ -39,9 +42,9 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="users/players" element={<Players />} />
           <Route path="users/clubs" element={<Clubs />} />
-          <Route path="users/districts" element={<div className="p-8 text-center text-gray-500">Districts management coming soon...</div>} />
-          <Route path="users/states" element={<div className="p-8 text-center text-gray-500">States management coming soon...</div>} />
-          <Route path="users/admins" element={<div className="p-8 text-center text-gray-500">Admins management coming soon...</div>} />
+          <Route path="users/districts" element={<Districts />} />
+          <Route path="users/states" element={<States />} />
+          <Route path="users/admins" element={<Admins />} />
           <Route path="approvals/players" element={<PlayersApproval />} />
           <Route path="approvals/clubs" element={<div className="p-8 text-center text-gray-500">Clubs approval coming soon...</div>} />
           <Route path="approvals/districts" element={<div className="p-8 text-center text-gray-500">Districts approval coming soon...</div>} />
