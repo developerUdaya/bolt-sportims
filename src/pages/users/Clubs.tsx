@@ -78,7 +78,7 @@ const clubsData: React.FC = () => {
   };
 
   const handleDeleteClub =async (clubId: string) => {
-     if (confirm('Are you sure you want to delete this player?')) {
+     if (confirm('Are you sure you want to delete this club?')) {
       try {
         await axios.delete(`${baseURL}/clubs/${clubId}`);
         fetchClubs()

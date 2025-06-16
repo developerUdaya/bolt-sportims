@@ -22,9 +22,15 @@ const PlayersApproval: React.FC = () => {
     }
   };
 
-  const handleReject = (playerId: string) => {
-    setPendingPlayers((prev: any) => prev.filter((p: any) => p.id !== playerId));
-    // In real app, would make API call to reject
+   const handleReject = async (playerId: number) => {
+    try {
+      await axios.delete(`${baseURL}/players/${playerId}`);
+      await fetchPlayers(); // Refresh data
+      setPendingPlayers((prev:any) => prev.filter((player:any) => player.id !== playerId)); // Optimistic update
+    } catch (error) {
+      console.error(`Failed to reject player ${playerId}:`, error);
+      alert('Failed to reject player. Please try again.');
+    }
   };
 
   useEffect(() => {

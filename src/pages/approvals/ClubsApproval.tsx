@@ -1,68 +1,116 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Check, X, Eye, Edit } from 'lucide-react';
 import Table from '../../components/UI/Table';
 import Button from '../../components/UI/Button';
 import Badge from '../../components/UI/Badge';
 import Card from '../../components/UI/Card';
-import { mockClubs } from '../../data/mockData';
-import { Club } from '../../types';
+import axios from 'axios';
+import { useClubs } from '../../context/ClubContext';
+
+// Define Club type based on provided data
+interface Club {
+    id: number;
+    clubId: string;
+    clubName: string;
+    coachName: string;
+    email: string;
+    mobileNumber: string;
+    districtName: string;
+    stateName: string;
+    approvalStatus: 'pending' | 'approved' | 'rejected';
+    aadharNumber: string;
+    address: string;
+    certificateUrl: string;
+    societyCertificateNumber: string;
+    districtId: number;
+    stateId: number;
+    createdAt: string;
+    updatedAt: string;
+    deleteStatus: boolean;
+}
 
 const ClubsApproval: React.FC = () => {
-    const [pendingPlayers, setPendingPlayers] = React.useState<Club[]>(
-        mockClubs.filter(p => !p.approved)
-    );
+    const { clubs, fetchClubs } = useClubs();
+    const [pendingClubs, setPendingClubs] = useState<Club[]>([]);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const baseURL = import.meta.env.VITE_API_BASE_URL 
 
-    const handleApprove = (playerId: string) => {
-        setPendingPlayers(prev => prev.filter(p => p.id !== playerId));
-        // In real app, would make API call to approve
+    // Filter pending clubs
+    useEffect(() => {
+        setPendingClubs(clubs?.filter((club:any) => club.approvalStatus === 'pending'));
+    }, []);
+
+    const handleApprove = async (clubId: number) => {
+        try {
+            await axios.put(`${baseURL}/clubs/${clubId}/approve`);
+            await fetchClubs(); // Refresh context data
+            setPendingClubs((prev) => prev.filter((club) => club.id !== clubId)); // Optimistic update
+        } catch (error) {
+            console.error('Failed to approve club:', error);
+            alert('Failed to approve club. Please try again.');
+        }
     };
 
-    const handleReject = (playerId: string) => {
-        setPendingPlayers(prev => prev.filter(p => p.id !== playerId));
-        // In real app, would make API call to reject
+    const handleReject = async (clubId: number) => {
+        try {
+            await axios.put(`${baseURL}/clubs/${clubId}/reject`, {
+                approvalStatus: 'rejected',
+                updatedAt: new Date().toISOString(),
+            });
+            await fetchClubs(); // Refresh context data
+            setPendingClubs((prev) => prev.filter((club) => club.id !== clubId)); // Optimistic update
+        } catch (error) {
+            console.error('Failed to reject club:', error);
+            alert('Failed to reject club. Please try again.');
+        }
     };
 
     const columns = [
         { key: 'clubId', label: 'Club ID', sortable: true },
-        { key: 'name', label: 'Club Name', sortable: true },
-        { key: 'contactPerson', label: 'Contact Person', sortable: true },
+        { key: 'clubName', label: 'Club Name', sortable: true },
+        { key: 'coachName', label: 'Contact Person', sortable: true },
         { key: 'email', label: 'Email', sortable: true },
-        { key: 'phone', label: 'Phone', sortable: true },
-        {
-            key: 'establishedYear',
-            label: 'Established',
-            sortable: true
-        },
-        { key: 'district', label: 'District', sortable: true },
-        { key: 'state', label: 'State', sortable: true },
+        { key: 'mobileNumber', label: 'Phone', sortable: true },
+        { key: 'districtName', label: 'District', sortable: true },
+        { key: 'stateName', label: 'State', sortable: true },
         {
             key: 'actions',
             label: 'Actions',
-            render: (value: any, player: Club) => (
+            render: (_value: any, club: Club) => (
                 <div className="flex items-center space-x-2">
-                    <Button size="sm" variant="secondary">
+                    <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => alert(`View details for club ${club.clubName}`)} // Placeholder
+                    >
                         <Eye size={16} />
                     </Button>
-                    <Button size="sm" variant="primary">
+                    <Button
+                        size="sm"
+                        variant="primary"
+                        onClick={() => alert(`Edit club ${club.clubName}`)} // Placeholder
+                    >
                         <Edit size={16} />
                     </Button>
                     <Button
                         size="sm"
                         variant="success"
-                        onClick={() => handleApprove(player.id)}
+                        onClick={() => handleApprove(club.id)}
+                        disabled={isLoading}
                     >
                         <Check size={16} />
                     </Button>
                     <Button
                         size="sm"
                         variant="danger"
-                        onClick={() => handleReject(player.id)}
+                        onClick={() => handleReject(club.id)}
+                        disabled={isLoading}
                     >
                         <X size={16} />
                     </Button>
                 </div>
-            )
-        }
+            ),
+        },
     ];
 
     return (
@@ -72,18 +120,22 @@ const ClubsApproval: React.FC = () => {
                     <h1 className="text-2xl font-bold text-gray-900">Clubs Pending Approval</h1>
                     <p className="text-gray-600 mt-1">Review and approve club registrations</p>
                 </div>
-                <Badge variant="warning">
-                    {pendingPlayers.length} Pending
-                </Badge>
+                <Badge variant="warning">{pendingClubs.length} Pending</Badge>
             </div>
 
             <Card>
-                <Table
-                    columns={columns}
-                    data={pendingPlayers}
-                    searchable
-                    searchPlaceholder="Search pending club..."
-                />
+                {isLoading ? (
+                    <div className="text-center py-4">Loading clubs...</div>
+                ) : pendingClubs.length === 0 ? (
+                    <div className="text-center py-4">No pending clubs to approve.</div>
+                ) : (
+                    <Table
+                        columns={columns}
+                        data={pendingClubs}
+                        searchable
+                        searchPlaceholder="Search pending club..."
+                    />
+                )}
             </Card>
         </div>
     );

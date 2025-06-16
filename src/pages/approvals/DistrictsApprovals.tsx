@@ -1,44 +1,58 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Check, X, Eye, Edit } from 'lucide-react';
 import Table from '../../components/UI/Table';
 import Button from '../../components/UI/Button';
 import Badge from '../../components/UI/Badge';
 import Card from '../../components/UI/Card';
-import { mockDistricts } from '../../data/mockData';
 import { District } from '../../types';
+import axios from 'axios';
 
 const DistrictsApproval: React.FC = () => {
-    const [pendingDistrict, setPendingDistrict] = React.useState<District[]>(
-        mockDistricts.filter(p => !p.approved)
-    );
+    const baseURL = import.meta.env.VITE_API_BASE_URL;
 
-    const handleApprove = (playerId: string) => {
-        setPendingDistrict(prev => prev.filter(p => p.id !== playerId));
-        // In real app, would make API call to approve
+
+    const [pendingDistrict, setPendingDistrict] = React.useState<any>([]);
+
+    const fetchSecretaries = async () => {
+        try {
+            const response = await axios.get(`${baseURL}/district_secretaries/`);
+            setPendingDistrict(response.data.filter((district: any) => district.approvalStatus === 'pending'));
+
+        } catch (error) {
+            console.error('Failed to fetch district secretaries:', error);
+        }
     };
+    useEffect(() => {
+        fetchSecretaries()
+    }, [])
 
+    const handleApprove = async (playerId: string) => {
+        try {
+            await axios.put(`${baseURL}/district_secretaries/${playerId}/approve`);
+            fetchSecretaries(); // Refresh the pending players list
+        } catch (error) {
+            console.error(`Failed to approve district secretaries ${playerId}:`, error);
+        }
+    };
     const handleReject = (playerId: string) => {
-        setPendingDistrict(prev => prev.filter(p => p.id !== playerId));
+        setPendingDistrict((prev: any) => prev.filter((p: any) => p.id !== playerId));
         // In real app, would make API call to reject
     };
 
     const columns = [
-        { key: 'districtCode', label: 'District Code', sortable: true },
-        { key: 'name', label: 'District Name', sortable: true },
-        { key: 'state', label: 'State', sortable: true },
+        { key: 'secretaryName', label: 'Secretary Name', sortable: true },
         {
-            key: 'population',
-            label: 'Population',
-            sortable: true,
-            render: (value: number) => value.toLocaleString()
+            key: 'districtName',
+            label: 'District',
+            sortable: true
         },
         {
-            key: 'area',
-            label: 'Area (sq km)',
-            sortable: true,
-            render: (value: number) => value.toLocaleString()
+            key: 'stateName',
+            label: 'State',
+            sortable: true
         },
         { key: 'email', label: 'Email', sortable: true },
+        { key: 'mobileNumber', label: 'Phone', sortable: true },
         {
             key: 'actions',
             label: 'Actions',
@@ -53,14 +67,14 @@ const DistrictsApproval: React.FC = () => {
                     <Button
                         size="sm"
                         variant="success"
-                        onClick={() => handleApprove(player.id)}
+                        onClick={() => handleApprove(player.districtId)}
                     >
                         <Check size={16} />
                     </Button>
                     <Button
                         size="sm"
                         variant="danger"
-                        onClick={() => handleReject(player.id)}
+                        onClick={() => handleReject(player.districtId)}
                     >
                         <X size={16} />
                     </Button>
@@ -77,7 +91,7 @@ const DistrictsApproval: React.FC = () => {
                     <p className="text-gray-600 mt-1">Review and approve districts registrations</p>
                 </div>
                 <Badge variant="warning">
-                    {pendingDistrict.length} Pending
+                    {pendingDistrict?.length} Pending
                 </Badge>
             </div>
 

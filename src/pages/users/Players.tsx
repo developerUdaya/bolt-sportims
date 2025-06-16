@@ -60,9 +60,9 @@ const Players: React.FC = () => {
     fetchPlayers(); // Always re-fetch to reset filters
     setPlayers(prev =>
       prev.filter(player =>
-        player.Name.toLowerCase().includes(query.toLowerCase()) ||
-        player.Email.toLowerCase().includes(query.toLowerCase()) ||
-        player.playerId.toString().toLowerCase().includes(query.toLowerCase())
+        player?.Name.toLowerCase().includes(query.toLowerCase()) ||
+        player?.Email.toLowerCase().includes(query.toLowerCase()) ||
+        player?.playerId.toString().toLowerCase().includes(query.toLowerCase())
         // player.clubName.toLowerCase().includes(query.toLowerCase())
       )
     );

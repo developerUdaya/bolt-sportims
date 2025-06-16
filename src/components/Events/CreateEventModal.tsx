@@ -63,6 +63,8 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         try {
           const response = await axios.get(`${baseURL}/events/${initialEvent.id}`);
           const event: any = response.data;
+          console.log('Fetched event data:', event);
+
           setEventData({
             name: event?.event?.name || '',
             eventDate: event.event?.eventDate || '',
@@ -88,16 +90,29 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
             }))
           );
           setAgeGroups(
-            (event.ageGroups || []).map((group: AgeGroup) => ({
+            (event.ageGroups || []).map((group: any) => ({
               ...group,
-              id: group.id || `AG${Date.now()}`,
+              id: group.id?.toString() || `AG${Date.now()}`, // Ensure ID is string
+              name: group.ageGroupName || '', // Map ageGroupName to name
+              startingDate: group.startingDate || '',
+              endingDate: group.endingDate || '',
             }))
           );
           setRaceMatrix(
-            (event.raceMatrix || []).map((matrix: RaceMatrix) => ({
-              ...matrix,
-              id: matrix.id || `RM${Date.now()}`,
-            }))
+            (event.racesForAgeGroups || []).flatMap((entry: any) =>
+              entry.raceIds.split(',').map((raceId: string) => ({
+                id: `RM${entry.id}-${raceId}`, // Unique ID
+                raceId: raceId.trim(),
+                ageGroupId: entry.ageGroupId.toString(),
+                category: categories.find((c) => c.name === entry.skateCategory) || {
+                  id: entry.skateCategory,
+                  name: entry.skateCategory,
+                  description: entry.skateCategory,
+                },
+                isEnabled: true, // Assume enabled
+                maxRacesPerPlayer: entry.exactRacesToSelectByPlayerCount || 1, // Use exactRacesToSelectByPlayerCount
+              }))
+            )
           );
         } catch (error) {
           console.error('Failed to fetch event data:', error);
@@ -204,6 +219,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
     });
     setRaceMatrix(updatedMatrix);
   };
+  console.log('raceMatrix:', raceMatrix);
 
   const isRaceEnabled = (raceId: string, ageGroupId: string, category: string) => {
     return raceMatrix.some(
@@ -286,8 +302,8 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         eventFee: eventData.eventFee || 0,
         certificateStatus: eventData.certificateStatus || true,
       },
-      races: races.map((race:any) => ({ name: race.name })),
-      ageGroups: ageGroups?.map((ageGroup:any) => ({
+      races: races.map((race: any) => ({ name: race.name })),
+      ageGroups: ageGroups?.map((ageGroup: any) => ({
         ageGroupName: ageGroup.name || '',
         startingDate: ageGroup.startingDate || '',
         endingDate: ageGroup.endingDate || '',
@@ -583,7 +599,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
           </div>
 
           <div className="space-y-4">
-            {ageGroups.map((ageGroup, index) => (
+            {ageGroups.map((ageGroup: any, index) => (
               <div key={ageGroup.id} className="border border-gray-200 rounded-lg p-4">
                 <div className="flex justify-between items-start mb-4">
                   <h4 className="font-medium">Age Group {index + 1}</h4>
@@ -657,7 +673,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {ageGroups.map((ageGroup) => (
+                    {ageGroups.map((ageGroup: any) => (
                       <tr key={ageGroup.id}>
                         <td className="border border-gray-300 px-4 py-2 font-medium">
                           {ageGroup.name || `${ageGroup.startingDate}-${ageGroup.endingDate}`}
@@ -678,7 +694,11 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                             type="number"
                             min="1"
                             max="10"
-                            // value={getMaxRaces(races[0]?.id || '', ageGroup.id, category.name)}
+                            value={
+                              eventData.raceMatrix?.find(
+                                (rm: any) => rm.ageGroupId === ageGroup.id && rm.skateCategory === category.name
+                              )?.exactRacesToSelectByPlayerCount || 1
+                            }
                             onChange={(e) =>
                               races.forEach((race) =>
                                 updateMaxRaces(race.id, ageGroup.id, category.name, parseInt(e.target.value))
@@ -699,6 +719,8 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
       ),
     },
   ];
+
+  
 
   return (
     <Modal
