@@ -35,7 +35,7 @@ interface PlayerModalProps {
 }
 
 const PlayerModal: React.FC<PlayerModalProps> = ({ isOpen, onClose, onSave, player, mode }) => {
-  console.log(player, "player");
+
 
   const [formData, setFormData] = React.useState<Partial<Player>>({
     name: '',
@@ -109,12 +109,6 @@ const PlayerModal: React.FC<PlayerModalProps> = ({ isOpen, onClose, onSave, play
   const { states, districts, loading } = useLocation();
 
   const { clubs } = useClubs();
-  console.log(clubs, " clubs");
-
-
-  console.log('States:', states);
-  console.log(" Districts:", districts);
-
 
   return (
     <Modal

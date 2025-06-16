@@ -36,10 +36,22 @@ import EventParticipation from './pages/eventDetails/EventParticipation';
 import PaymentReport from './pages/eventDetails/PaymentReport';
 import EventOfficial from './pages/EventOfficial';
 import EventOrganisers from './pages/EventOrganisers';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import EventParticipantsDetails from './pages/eventDetails/EventParticipantsDetails';
 
 function App() {
   return (
     <Router>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        draggable
+      />
       <Routes>
         <Route path="/login" element={<Login />} />
 
@@ -56,14 +68,13 @@ function App() {
           <Route path="approvals/districts" element={<DistrictsApproval />} />
           <Route path="approvals/states" element={<StatesApproval />} />
           <Route path="events" element={<Events />} />
-          <Route path="results" element={<div className="p-8 text-center text-gray-500">Results management coming soon...</div>} />
           <Route path="/eventsDetails/participation" element={<EventParticipation />} />
+          <Route path="/eventsDetails/event-participation/:eventId" element={<EventParticipantsDetails />} />
           <Route path="/eventsDetails/payment" element={<PaymentReport />} />
           <Route path="/eventOfficial" element={<EventOfficial />} />
           <Route path="/eventOrganisers" element={<EventOrganisers />} />
           <Route path="gallery" element={<Gallery />} />
           <Route path="news" element={<News />} />
-          <Route path="settings" element={<div className="p-8 text-center text-gray-500">Settings coming soon...</div>} />
         </Route>
 
         {/* Player Routes */}

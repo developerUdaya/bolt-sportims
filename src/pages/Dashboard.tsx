@@ -1,12 +1,30 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Users, Building2, MapPin, Map, Calendar, Gift } from 'lucide-react';
 import StatsCard from '../components/UI/StatsCard';
 import Card from '../components/UI/Card';
 import Badge from '../components/UI/Badge';
 import { mockDashboardStats } from '../data/mockData';
+import axios from 'axios';
+import { useDashboardCounts } from '../context/DashboardCountContext';
 
 const Dashboard: React.FC = () => {
+   const counts = useDashboardCounts();
   const stats = mockDashboardStats;
+  const baseURL = import.meta.env.VITE_API_BASE_URL;
+
+  const [events, setEvents] = useState<any>([]);
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const fetchEvents = async () => {
+    try {
+      const response = await axios.get(`${baseURL}/events/`);
+      setEvents(response.data);
+    } catch (error) {
+      console.error('Failed to fetch events:', error);
+    }
+  };
 
   const calculateAge = (dateOfBirth: string) => {
     const today = new Date();
@@ -30,28 +48,28 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
           title="Registered Players"
-          value={stats.totalPlayers}
+          value={counts?.players}
           icon={Users}
           color="blue"
           trend={{ value: 12, isPositive: true }}
         />
         <StatsCard
           title="Registered Clubs"
-          value={stats.totalClubs}
+          value={counts?.clubs}
           icon={Building2}
           color="green"
           trend={{ value: 8, isPositive: true }}
         />
         <StatsCard
           title="Districts"
-          value={stats.totalDistricts}
+          value={counts?.districtSecretaries}
           icon={MapPin}
           color="yellow"
           trend={{ value: 0, isPositive: true }}
         />
         <StatsCard
           title="States"
-          value={stats.totalStates}
+          value={counts?.stateSecretaries}
           icon={Map}
           color="purple"
           trend={{ value: 0, isPositive: true }}
@@ -62,28 +80,38 @@ const Dashboard: React.FC = () => {
         {/* Upcoming Events */}
         <Card title="Upcoming Sports Events">
           <div className="space-y-4">
-            {stats.upcomingEvents.map((event) => (
-              <div key={event.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Calendar className="text-blue-600" size={20} />
+            {events
+              ?.filter((event: any) => {
+                const eventDate = new Date(event.eventDate);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0); // remove time portion
+
+                // Check only events that are strictly in the future
+                return eventDate > today;
+              })
+              ?.sort((a: any, b: any) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime())
+              ?.map((event: any) => (
+                <div key={event.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <Calendar className="text-blue-600" size={20} />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{event.name}</p>
+                      <p className="text-sm text-gray-500">{event.venue || 'Venue not available'}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900">{event.name}</p>
-                    <p className="text-sm text-gray-500">{event.venue}</p>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-gray-900">
+                      {new Date(event.eventDate).toLocaleDateString()}
+                    </p>
+                    <Badge variant="info" size="sm">
+                      Upcoming
+                    </Badge>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">
-                    {new Date(event.date).toLocaleDateString()}
-                  </p>
-                  <Badge variant="info" size="sm">
-                    {event.status}
-                  </Badge>
-                </div>
-              </div>
-            ))}
-            {stats.upcomingEvents.length === 0 && (
+              ))}
+            {events?.length === 0 && (
               <p className="text-gray-500 text-center py-4">No upcoming events</p>
             )}
           </div>
@@ -121,7 +149,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Recent Activity */}
-      <Card title="Recent Activity">
+      {/* <Card title="Recent Activity">
         <div className="space-y-4">
           <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -145,7 +173,7 @@ const Dashboard: React.FC = () => {
             <span className="text-xs text-gray-500 ml-auto">3 days ago</span>
           </div>
         </div>
-      </Card>
+      </Card> */}
     </div>
   );
 };

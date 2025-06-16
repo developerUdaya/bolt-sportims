@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus, Calendar, MapPin, Users, Edit, Trash2, Eye, Clock, Trophy, UserPlus } from 'lucide-react';
 import Button from '../components/UI/Button';
 import Card from '../components/UI/Card';
@@ -10,6 +10,7 @@ import ResultsModal from '../components/Events/ResultsModal';
 import { mockSchedules } from '../data/mockData';
 import { Event, Schedule } from '../types';
 import axios from 'axios';
+import { exportToExcel } from '../ExportToExcel/ExportToExcel';
 
 const Events: React.FC = () => {
   const baseURL = import.meta.env.VITE_API_BASE_URL;
@@ -22,6 +23,8 @@ const Events: React.FC = () => {
   const [showResultsModal, setShowResultsModal] = React.useState(false);
   const [activeView, setActiveView] = React.useState<'events' | 'schedules' | 'results'>('events');
   const [modalMode, setModalMode] = React.useState<'create' | 'view'>('create');
+  const [allEvents, setAllEvents] = useState<any[]>([]);   
+ 
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -40,10 +43,12 @@ const Events: React.FC = () => {
     try {
       const response = await axios.get(`${baseURL}/events/`);
       setEvents(response.data);
+      setAllEvents(response.data);
     } catch (error) {
       console.error('Failed to fetch events:', error);
     }
   };
+  
 
   const handleViewEvent = (event: Event) => {
     setSelectedEvent(event);
@@ -89,13 +94,13 @@ const Events: React.FC = () => {
   };
 
   const handleDelete = async (eventId: any) => {
-  try {
-    await axios.delete(`${baseURL}/events/${eventId}`);
-    fetchEvents(); 
-  } catch (error) {
-    console.error('Failed to delete event:', error);
-  }
-};
+    try {
+      await axios.delete(`${baseURL}/events/${eventId}`);
+      fetchEvents();
+    } catch (error) {
+      console.error('Failed to delete event:', error);
+    }
+  };
 
 
   const eventsColumns = [
@@ -138,7 +143,7 @@ const Events: React.FC = () => {
           <Button size="sm" variant="warning" title="View Results">
             <Trophy size={16} />
           </Button>
-          <Button onClick={()=>handleDelete(event?.id)} size="sm" variant="danger" title="Delete Event">
+          <Button onClick={() => handleDelete(event?.id)} size="sm" variant="danger" title="Delete Event">
             <Trash2 size={16} />
           </Button>
         </div>
@@ -167,7 +172,7 @@ const Events: React.FC = () => {
     {
       key: 'registrationCount',
       label: 'Participants',
-      render: (value: any[]) => value.length,
+      render: (value: any[]) => value?.length,
     },
     {
       key: 'resultsEntered',
@@ -205,8 +210,50 @@ const Events: React.FC = () => {
     },
   ];
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // remove time for accurate comparison
+
+  const upcomingEvents = events.filter((e: any) => {
+    const eventDate = new Date(e.eventDate);
+    return eventDate > today;
+  });
+
+  const ongoingEvents = events.filter((e: any) => {
+    const eventDate = new Date(e.eventDate);
+    return (
+      eventDate.getFullYear() === today.getFullYear() &&
+      eventDate.getMonth() === today.getMonth() &&
+      eventDate.getDate() === today.getDate()
+    );
+  });
+
+  const completedEvents = events.filter((e: any) => {
+    const eventDate = new Date(e.eventDate);
+    return eventDate < today;
+  });
+  const handleSearch = (query: string) => {
+    if (!query.trim()) {
+      // If query is empty, show all
+      setEvents(allEvents);
+      return;
+    }
+
+    const filtered = allEvents.filter((event: any) =>
+      event?.name?.toLowerCase().includes(query.toLowerCase()) ||
+      event?.venue?.toLowerCase().includes(query.toLowerCase()) ||
+      event?.eventFee?.toString().includes(query)
+    );
+
+    setEvents(filtered);
+  };
+
   const renderEventsView = () => (
     <div className="space-y-6">
+       <div className='flex justify-end'>
+        <Button variant="secondary" onClick={() => exportToExcel(allEvents,'event_list')}>
+          Export to Excel
+        </Button>
+      </div>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Events Management</h1>
@@ -227,9 +274,7 @@ const Events: React.FC = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-600">Upcoming Events</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {events.filter(e => e.status === 'upcoming').length}
-              </p>
+              <p className="text-2xl font-bold text-gray-900">{upcomingEvents.length}</p>
             </div>
           </div>
         </Card>
@@ -241,9 +286,7 @@ const Events: React.FC = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-600">Ongoing Events</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {events.filter(e => e.status === 'ongoing').length}
-              </p>
+              <p className="text-2xl font-bold text-gray-900">{ongoingEvents.length}</p>
             </div>
           </div>
         </Card>
@@ -255,9 +298,7 @@ const Events: React.FC = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-600">Completed Events</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {events.filter(e => e.status === 'completed').length}
-              </p>
+              <p className="text-2xl font-bold text-gray-900">{completedEvents.length}</p>
             </div>
           </div>
         </Card>
@@ -270,6 +311,7 @@ const Events: React.FC = () => {
           data={events}
           searchable
           searchPlaceholder="Search events..."
+          onSearch={handleSearch}
         />
       </Card>
     </div>
@@ -326,7 +368,7 @@ const Events: React.FC = () => {
           >
             All Events
           </button>
-          <button
+          {/* <button
             onClick={() => setActiveView('schedules')}
             className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeView === 'schedules'
               ? 'border-blue-500 text-blue-600'
@@ -343,7 +385,7 @@ const Events: React.FC = () => {
               }`}
           >
             Results & Rankings
-          </button>
+          </button> */}
         </nav>
       </div>
 

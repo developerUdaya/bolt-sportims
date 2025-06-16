@@ -9,6 +9,7 @@ import FormField from '../../components/UI/FormField';
 import axios from 'axios';
 import { useLocation } from '../../context/LocationContext';
 import ImageUpload from '../../components/UI/ImageUpload';
+import { exportToExcel } from '../../ExportToExcel/ExportToExcel';
 
 interface DistrictSecretary {
   districtSecretaryId: any;
@@ -379,6 +380,11 @@ const Districts: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <div className='flex justify-end'>
+        <Button variant="secondary" onClick={() => exportToExcel(districtSecretaries,'district_secretaries_list')}>
+          Export to Excel
+        </Button>
+      </div>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">District Secretaries Management</h1>

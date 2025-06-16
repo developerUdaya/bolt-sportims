@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { Edit, Trash2, Eye, Plus } from 'lucide-react';
 import Table from '../../components/UI/Table';
@@ -7,9 +7,9 @@ import Badge from '../../components/UI/Badge';
 import Card from '../../components/UI/Card';
 import PlayerModal from '../../components/Users/PlayerModal';
 import { Player } from '../../types';
+import { toast } from 'react-toastify';
+import { exportToExcel } from '../../ExportToExcel/ExportToExcel';
 
-// const API_URL = 'http://103.174.10.153:3011/players/';
-// const API_URL = 'https://x92kpthd-3011.inc1.devtunnels.ms/players/';
 const baseURL = import.meta.env.VITE_API_BASE_URL;
 const Players: React.FC = () => {
   const [players, setPlayers] = React.useState<Player[]>([]);
@@ -18,6 +18,7 @@ const Players: React.FC = () => {
   const [showModal, setShowModal] = React.useState(false);
   const [selectedPlayer, setSelectedPlayer] = React.useState<Player | null>(null);
   const [modalMode, setModalMode] = React.useState<'create' | 'edit' | 'view'>('create');
+  const [statusFilter, setStatusFilter] = React.useState<string>('all');
 
   useEffect(() => {
     fetchPlayers();
@@ -26,8 +27,6 @@ const Players: React.FC = () => {
   const fetchPlayers = async () => {
     try {
       const response = await axios.get(`${baseURL}/players/`);
-      console.log(response, "Fetched players");
-
       setPlayers(response.data);
     } catch (error) {
       console.error('Failed to fetch players:', error);
@@ -57,11 +56,10 @@ const Players: React.FC = () => {
   };
 
   const handleSearch = (query: string) => {
-    fetchPlayers(); // Always re-fetch to reset filters
     setPlayers(prev =>
       prev.filter(player =>
-        player?.Name.toLowerCase().includes(query.toLowerCase()) ||
-        player?.Email.toLowerCase().includes(query.toLowerCase()) ||
+        player?.name.toLowerCase().includes(query.toLowerCase()) ||
+        player?.email.toLowerCase().includes(query.toLowerCase()) ||
         player?.playerId.toString().toLowerCase().includes(query.toLowerCase())
         // player.clubName.toLowerCase().includes(query.toLowerCase())
       )
@@ -76,7 +74,7 @@ const Players: React.FC = () => {
 
   const handleViewPlayer = (player: any) => {
     console.log('View player:', player);
-    
+
     setSelectedPlayer(player);
     setModalMode('view');
     setShowModal(true);
@@ -102,7 +100,9 @@ const Players: React.FC = () => {
   const handleSavePlayer = async (playerData: Partial<Player>) => {
     try {
       if (modalMode === 'create') {
-        await axios.post(`${baseURL}/players/register`, playerData);
+        const response = await axios.post(`${baseURL}/players/register`, playerData);
+        toast.success(response?.data?.message || 'Player added successfully!');
+
       } else if (modalMode === 'edit' && selectedPlayer) {
         await axios.put(`${baseURL}/players/${selectedPlayer.playerId}`, playerData);
       }
@@ -158,6 +158,16 @@ const Players: React.FC = () => {
     },
     { key: 'districtName', label: 'District', sortable: true },
     {
+      key: 'approvalStatus',
+      label: 'Status',
+      sortable: true,
+      render: (value: string) => (
+        <Badge variant={value === 'approved' ? 'success' : 'warning'} size="sm">
+          {value === 'approved' ? 'Approved' : 'Pending'}
+        </Badge>
+      ),
+    },
+    {
       key: 'actions',
       label: 'Actions',
       render: (_value: any, row: Player) => (
@@ -176,8 +186,20 @@ const Players: React.FC = () => {
     }
   ];
 
+  // Filter players based on statusFilter
+  const filteredPlayers = useMemo(() => {
+    if (statusFilter === 'all') return players;
+    return players.filter((player: any) => player.approvalStatus === statusFilter);
+  }, [players, statusFilter]);
+
   return (
     <div className="space-y-6">
+      <div className='flex justify-end'>
+        <Button variant="secondary" onClick={() => exportToExcel(players,'player_list')}>
+          Export to Excel
+        </Button>
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Players Management</h1>
@@ -185,14 +207,65 @@ const Players: React.FC = () => {
         </div>
         <Button variant="primary" onClick={handleCreatePlayer}>
           <Plus size={16} className="mr-2" />
-          Add New Player
+          Add New Secretary
         </Button>
       </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-gray-900">{players.length}</div>
+            <div className="text-sm text-gray-600">Total Players</div>
+          </div>
+        </Card>
+        <Card>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600">
+              {players.filter((d: any) => d.approvalStatus === 'approved').length}
+            </div>
+            <div className="text-sm text-gray-600">Approved</div>
+          </div>
+        </Card>
+        <Card>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-yellow-600">
+              {players.filter((d: any) => d.approvalStatus === 'pending').length}
+            </div>
+            <div className="text-sm text-gray-600">Pending Approval</div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <div className="flex items-center space-x-4">
+          <span className="text-sm font-medium text-gray-700">Filter by Status:</span>
+          <div className="flex space-x-2">
+            {[
+              { value: 'all', label: 'All Players' },
+              { value: 'approved', label: 'Approved' },
+              { value: 'pending', label: 'Pending' },
+            ].map((status) => (
+              <button
+                key={status.value}
+                onClick={() => setStatusFilter(status.value)}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${statusFilter === status.value
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+              >
+                {status.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </Card>
 
       <Card>
         <Table
           columns={columns}
-          data={players}
+          data={filteredPlayers}
           searchable
           searchPlaceholder="Search players..."
           onSearch={handleSearch}

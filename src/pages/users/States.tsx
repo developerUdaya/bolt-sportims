@@ -9,6 +9,7 @@ import FormField from '../../components/UI/FormField';
 import axios from 'axios';
 import { useLocation } from '../../context/LocationContext';
 import ImageUpload from '../../components/UI/ImageUpload';
+import { exportToExcel } from '../../ExportToExcel/ExportToExcel';
 
 interface StateSecretary {
   stateSecretaryId?: string;
@@ -344,6 +345,11 @@ const States: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <div className='flex justify-end'>
+        <Button variant="secondary" onClick={() => exportToExcel(stateSecretaries,'state_secretary_list')}>
+          Export to Excel
+        </Button>
+      </div>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">State Secretaries Management</h1>

@@ -56,10 +56,8 @@ const Sidebar: React.FC = () => {
     },
     { icon: UserRoundCog, label: 'Event Official', path: '/eventOfficial' },
     { icon: UserSearch, label: 'Event Organisers', path: '/eventOrganisers' },
-    { icon: Trophy, label: 'Results', path: '/results' },
     { icon: Image, label: 'Gallery', path: '/gallery' },
     { icon: Newspaper, label: 'News', path: '/news' },
-    { icon: Settings, label: 'Settings', path: '/settings' }
   ];
 
   const [expandedMenu, setExpandedMenu] = React.useState<string | null>('/users');

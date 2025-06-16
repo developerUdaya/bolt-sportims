@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Table from '../../components/UI/Table';
 import Card from '../../components/UI/Card';
 import Button from '../../components/UI/Button';
@@ -7,8 +7,12 @@ import { Eye } from 'lucide-react';
 import { mockEvents, mockParticipants } from '../../data/mockData';
 import { Event, Participant } from '../../types';
 import Badge from '../../components/UI/Badge';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const EventParticipation: React.FC = () => {
+    const baseURL = import.meta.env.VITE_API_BASE_URL;
+    const navigate = useNavigate();
     const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
     const [participants, setParticipants] = useState<Participant[]>([]);
     const [showModal, setShowModal] = useState(false);
@@ -31,16 +35,21 @@ const EventParticipation: React.FC = () => {
 
     // Define the allowed keys for sorting
     type EventSortableKeys = 'id' | 'name' | 'venue' | 'startDate' | 'endDate' | 'totalParticipants';
+    const [events, setEvents] = useState<Event[]>([]);
 
+    useEffect(() => {
+        axios.get(`${baseURL}/events/`)
+            .then(res => setEvents(res.data))
+            .catch(err => console.error(err));
+    }, []);
     const getFilteredAndSortedEvents = () => {
-        let filtered = mockEvents;
+        let filtered = events;
 
         if (search) {
             filtered = filtered.filter(
                 (ev) =>
-                    ev.name.toLowerCase().includes(search.toLowerCase()) ||
-                    ev.id.toLowerCase().includes(search.toLowerCase()) ||
-                    ev.venue.toLowerCase().includes(search.toLowerCase())
+                    ev?.name?.toLowerCase().includes(search.toLowerCase()) ||
+                    ev?.venue?.toLowerCase().includes(search.toLowerCase())
             );
         }
 
@@ -67,23 +76,38 @@ const EventParticipation: React.FC = () => {
         { key: 'id', label: 'Event ID', sortable: true },
         { key: 'name', label: 'Event Name', sortable: true },
         { key: 'venue', label: 'Venue', sortable: true },
-        { key: 'startDate', label: 'Start Date', sortable: true },
-        { key: 'endDate', label: 'End Date', sortable: true },
+        { key: 'eventDate', label: 'Event Date', sortable: true },
         {
             key: 'status',
             label: 'Status',
-            render: (v: string) => {
-                const val = v.toLowerCase();
+            render: (_: any, event: any) => {
+                const today = new Date();
+                const eventDate = new Date(event.eventDate);
+
+                let status = '';
                 let variant: 'success' | 'danger' | 'default' = 'default';
 
-                if (val === 'paid') variant = 'success';
-                else if (val === 'unpaid') variant = 'danger';
+                // Remove time portion for accurate comparison
+                const todayOnly = new Date(today.toDateString());
+                const eventOnly = new Date(eventDate.toDateString());
 
-                return <Badge variant={variant}>{v}</Badge>;
+                if (eventOnly.getTime() < todayOnly.getTime()) {
+                    status = 'Completed';
+                    variant = 'success';
+                } else if (eventOnly.getTime() === todayOnly.getTime()) {
+                    status = 'Ongoing';
+                    variant = 'danger';
+                } else {
+                    status = 'Upcoming';
+                    variant = 'default';
+                }
+
+                return <Badge variant={variant}>{status}</Badge>;
             },
-        },
+        }
+        ,
         {
-            key: 'totalParticipants',
+            key: 'registrationCount',
             label: 'Participants',
             sortable: true,
         },
@@ -94,19 +118,7 @@ const EventParticipation: React.FC = () => {
                 <Button
                     size="sm"
                     variant="secondary"
-                    onClick={() => {
-                        setSelectedEvent(ev);
-                        // const filtered = mockParticipants.filter(
-                        //     (p) => p.eventName === ev.name
-                        // );
-                        setParticipants(
-                            mockParticipants.map((p) => ({
-                                ...p,
-                                status: p.status === 'Paid' ? 'Paid' : 'Unpaid',
-                            }))
-                        );
-                        setShowModal(true);
-                    }}
+                    onClick={() => navigate(`/eventsDetails/event-participation/${ev.id}`)}
                 >
                     <Eye size={16} />
                 </Button>

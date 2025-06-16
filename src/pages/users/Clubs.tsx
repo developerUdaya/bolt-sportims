@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Edit, Trash2, Eye, Plus } from 'lucide-react';
 import Table from '../../components/UI/Table';
 import Button from '../../components/UI/Button';
@@ -7,18 +7,21 @@ import ClubModal from '../../components/Users/ClubModal';
 import { Club } from '../../types';
 import { useClubs } from '../../context/ClubContext';
 import axios from 'axios';
+import Badge from '../../components/UI/Badge';
+import { exportToExcel } from '../../ExportToExcel/ExportToExcel';
 
 const clubsData: React.FC = () => {
 
-  const { clubs,fetchClubs } = useClubs();
+  const { clubs, fetchClubs } = useClubs();
   const baseURL = import.meta.env.VITE_API_BASE_URL;
 
-  const [clubsData, setclubsData] = React.useState<any>(clubs); 
+  const [clubsData, setclubsData] = React.useState<any>(clubs);
   const [sortBy, setSortBy] = React.useState<string>('');
   const [sortOrder, setSortOrder] = React.useState<'asc' | 'desc'>('asc');
   const [showModal, setShowModal] = React.useState(false);
   const [selectedClub, setSelectedClub] = React.useState<Club | null>(null);
   const [modalMode, setModalMode] = React.useState<'create' | 'edit' | 'view'>('create');
+  const [statusFilter, setStatusFilter] = React.useState<string>('all');
 
   const handleSort = (key: string) => {
     if (sortBy === key) {
@@ -43,7 +46,7 @@ const clubsData: React.FC = () => {
   };
   useEffect(() => {
     setclubsData(clubs);
-  }, [clubs,fetchClubs]);
+  }, [clubs, fetchClubs]);
 
   const handleSearch = (query: string) => {
     const filtered = clubs
@@ -77,8 +80,8 @@ const clubsData: React.FC = () => {
     setShowModal(true);
   };
 
-  const handleDeleteClub =async (clubId: string) => {
-     if (confirm('Are you sure you want to delete this club?')) {
+  const handleDeleteClub = async (clubId: string) => {
+    if (confirm('Are you sure you want to delete this club?')) {
       try {
         await axios.delete(`${baseURL}/clubs/${clubId}`);
         fetchClubs()
@@ -87,7 +90,7 @@ const clubsData: React.FC = () => {
       }
     }
   };
-;
+  ;
 
   const handleSaveClub = async (clubData: any) => {
     try {
@@ -118,6 +121,16 @@ const clubsData: React.FC = () => {
     { key: 'districtName', label: 'District', sortable: true },
     { key: 'stateName', label: 'State', sortable: true },
     {
+      key: 'approvalStatus',
+      label: 'Status',
+      sortable: true,
+      render: (value: string) => (
+        <Badge variant={value === 'approved' ? 'success' : 'warning'} size="sm">
+          {value === 'approved' ? 'Approved' : 'Pending'}
+        </Badge>
+      ),
+    },
+    {
       key: 'actions',
       label: 'Actions',
       render: (_value: any, club: Club) => (
@@ -135,9 +148,19 @@ const clubsData: React.FC = () => {
       )
     }
   ];
+  // Filter players based on statusFilter
+  const filteredClubs = useMemo(() => {
+    if (statusFilter === 'all') return clubsData;
+    return clubsData.filter((player: any) => player.approvalStatus === statusFilter);
+  }, [clubsData, statusFilter]);
 
   return (
     <div className="space-y-6">
+      <div className='flex justify-end'>
+        <Button variant="secondary" onClick={() => exportToExcel(clubsData,'club_list')}>
+          Export to Excel
+        </Button>
+      </div>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Clubs Management</h1>
@@ -145,14 +168,65 @@ const clubsData: React.FC = () => {
         </div>
         <Button variant="primary" onClick={handleCreateClub}>
           <Plus size={16} className="mr-2" />
-          Add New Club
+          Add New Secretary
         </Button>
       </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-gray-900">{clubsData.length}</div>
+            <div className="text-sm text-gray-600">Total Clubs</div>
+          </div>
+        </Card>
+        <Card>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600">
+              {clubsData.filter((d: any) => d.approvalStatus === 'approved').length}
+            </div>
+            <div className="text-sm text-gray-600">Approved</div>
+          </div>
+        </Card>
+        <Card>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-yellow-600">
+              {clubsData.filter((d: any) => d.approvalStatus === 'pending').length}
+            </div>
+            <div className="text-sm text-gray-600">Pending Approval</div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <div className="flex items-center space-x-4">
+          <span className="text-sm font-medium text-gray-700">Filter by Status:</span>
+          <div className="flex space-x-2">
+            {[
+              { value: 'all', label: 'All Clubs' },
+              { value: 'approved', label: 'Approved' },
+              { value: 'pending', label: 'Pending' },
+            ].map((status) => (
+              <button
+                key={status.value}
+                onClick={() => setStatusFilter(status.value)}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${statusFilter === status.value
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+              >
+                {status.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </Card>
 
       <Card>
         <Table
           columns={columns}
-          data={clubsData}
+          data={filteredClubs}
           searchable
           searchPlaceholder="Search clubsData..."
           onSearch={handleSearch}
