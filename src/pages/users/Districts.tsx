@@ -10,6 +10,7 @@ import axios from 'axios';
 import { useLocation } from '../../context/LocationContext';
 import ImageUpload from '../../components/UI/ImageUpload';
 import { exportToExcel } from '../../ExportToExcel/ExportToExcel';
+import { toast } from 'react-toastify';
 
 interface DistrictSecretary {
   districtSecretaryId: any;
@@ -210,33 +211,36 @@ const Districts: React.FC = () => {
   const handleDeleteSecretary = async (districtSecretaryId: string) => {
     if (confirm('Are you sure you want to delete this district secretary?')) {
       try {
-        await axios.delete(`${baseURL}/district_secretaries/${districtSecretaryId}`);
+        const res = await axios.delete(`${baseURL}/district_secretaries/${districtSecretaryId}`);
+        toast.success(res?.data?.message || 'Data deleted successfully!')
         fetchSecretaries();
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to delete district secretary:', error);
-        alert('Failed to delete district secretary. Please try again.');
+        toast.error(error?.res?.data?.message || 'Data deleted failed!')
       }
     }
   };
 
   const handleApproveSecretary = async (secretaryId: string) => {
     try {
-      await axios.put(`${baseURL}/district_secretaries/${secretaryId}`, { approvalStatus: 'approved' });
+      const res = await axios.put(`${baseURL}/district_secretaries/${secretaryId}`, { approvalStatus: 'approved' });
+      toast.success(res?.data?.message || 'Data approved!')
       fetchSecretaries()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to approve district secretary:', error);
-      alert('Failed to approve district secretary. Please try again.');
+      toast.error(error?.res?.data?.message || "Data failed to approve!")
     }
   };
 
   const handleRejectSecretary = async (secretaryId: string) => {
     if (confirm('Are you sure you want to reject this district secretary registration?')) {
       try {
-        await axios.delete(`${baseURL}/district_secretaries/${secretaryId}`);
+        const res = await axios.delete(`${baseURL}/district_secretaries/${secretaryId}`);
+        toast.success(res?.data?.message || 'Data rejected!')
         fetchSecretaries();
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to reject district secretary:', error);
-        alert('Failed to reject district secretary. Please try again.');
+        toast.error(error?.res?.data?.message || "Data failed to reject!")
       }
     }
   };
@@ -267,17 +271,19 @@ const Districts: React.FC = () => {
 
     try {
       if (modalMode === 'create') {
-        await axios.post(`${baseURL}/district_secretaries/register`, payload);
+        const res = await axios.post(`${baseURL}/district_secretaries/register`, payload);
+        toast.success(res?.data?.message || "Data added successfully!")
         fetchSecretaries();
       } else if (modalMode === 'edit' && selectedSecretary) {
-        await axios.put(`${baseURL}/district_secretaries/${selectedSecretary.districtSecretaryId}`, payload);
+        const res = await axios.put(`${baseURL}/district_secretaries/${selectedSecretary.districtSecretaryId}`, payload);
+        toast.success(res?.data?.message || "Data updated successfully!")
         fetchSecretaries();
       }
 
       setShowModal(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving district secretary:', error);
-      alert('Failed to save district secretary. Please try again.');
+      toast.error(error?.res?.data?.message || 'Data failed to add!')
     }
   };
 
@@ -299,11 +305,24 @@ const Districts: React.FC = () => {
       key: 'approvalStatus',
       label: 'Status',
       sortable: true,
-      render: (value: string) => (
-        <Badge variant={value === 'approved' ? 'success' : 'warning'} size="sm">
-          {value === 'approved' ? 'Approved' : 'Pending'}
-        </Badge>
-      ),
+      render: (value: string) => {
+        let variant: 'success' | 'warning' | 'danger' = 'warning';
+        let label = 'Pending';
+
+        if (value === 'approved') {
+          variant = 'success';
+          label = 'Approved';
+        } else if (value === 'rejected') {
+          variant = 'danger';
+          label = 'Rejected';
+        }
+
+        return (
+          <Badge variant={variant} size="sm">
+            {label}
+          </Badge>
+        );
+      }
     },
     {
       key: 'actions',
@@ -381,7 +400,7 @@ const Districts: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className='flex justify-end'>
-        <Button variant="secondary" onClick={() => exportToExcel(districtSecretaries,'district_secretaries_list')}>
+        <Button variant="secondary" onClick={() => exportToExcel(districtSecretaries, 'district_secretaries_list')}>
           Export to Excel
         </Button>
       </div>

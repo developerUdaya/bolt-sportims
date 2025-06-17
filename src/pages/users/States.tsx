@@ -273,11 +273,24 @@ const States: React.FC = () => {
       key: 'approvalStatus',
       label: 'Status',
       sortable: true,
-      render: (value: string) => (
-        <Badge variant={value === 'approved' ? 'success' : 'warning'} size="sm">
-          {value === 'approved' ? 'Approved' : 'Pending'}
-        </Badge>
-      ),
+      render: (value: string) => {
+        let variant: 'success' | 'warning' | 'danger' = 'warning';
+        let label = 'Pending';
+
+        if (value === 'approved') {
+          variant = 'success';
+          label = 'Approved';
+        } else if (value === 'rejected') {
+          variant = 'danger';
+          label = 'Rejected';
+        }
+
+        return (
+          <Badge variant={variant} size="sm">
+            {label}
+          </Badge>
+        );
+      }
     },
     {
       key: 'actions',
@@ -346,7 +359,7 @@ const States: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className='flex justify-end'>
-        <Button variant="secondary" onClick={() => exportToExcel(stateSecretaries,'state_secretary_list')}>
+        <Button variant="secondary" onClick={() => exportToExcel(stateSecretaries, 'state_secretary_list')}>
           Export to Excel
         </Button>
       </div>

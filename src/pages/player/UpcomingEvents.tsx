@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Calendar, MapPin, Users, Clock, CheckCircle } from 'lucide-react';
 import Card from '../../components/UI/Card';
 import Badge from '../../components/UI/Badge';
@@ -7,6 +7,8 @@ import Modal from '../../components/UI/Modal';
 import FormField from '../../components/UI/FormField';
 import { mockEvents, mockRaces, mockAgeGroups } from '../../data/mockData';
 import { Event } from '../../types';
+import axios from 'axios';
+import { usePlayer } from '../../context/PlayerContext';
 
 interface RegistrationData {
   selectedRaces: string[];
@@ -17,12 +19,14 @@ interface RegistrationData {
 const UpcomingEvents: React.FC = () => {
   const [events, setEvents] = React.useState(mockEvents.filter(e => e.status === 'upcoming'));
   const [showRegistrationModal, setShowRegistrationModal] = React.useState(false);
-  const [selectedEvent, setSelectedEvent] = React.useState<Event | null>(null);
+  const [selectedEvent, setSelectedEvent] = React.useState<any>(null);
   const [registrationData, setRegistrationData] = React.useState<RegistrationData>({
     selectedRaces: [],
     ageGroup: '',
     category: 'beginner'
   });
+
+  
 
   // Mock current player data
   const currentPlayer = {
@@ -31,25 +35,61 @@ const UpcomingEvents: React.FC = () => {
     category: 'beginner'
   };
 
-  const calculateAge = (dateOfBirth: string) => {
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    const age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      return age - 1;
-    }
-    return age;
-  };
+    const { player } = usePlayer();
+
+  
+    const baseURL = import.meta.env.VITE_API_BASE_URL;
+    const [upcomingEvents, setUpcomingEvents] = useState<any>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+  
+    useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`${baseURL}/events/get-all-with-full-details`);
+        console.log(response);
+
+        const currentDate = new Date(); // Dynamic current date
+        const events = response.data.filter((event: any) => new Date(event.eventDate) > currentDate);
+        setUpcomingEvents(events);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch events:', err);
+        setError('Failed to load upcoming events. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEvents();
+  }, [baseURL]);
+
+  console.log(upcomingEvents,'upcomingEvents');
+  
+
+const calculateAge = (dob: string, ageAsOnDate: string) => {
+  
+  const asOn = new Date(ageAsOnDate);
+  const birthDate = new Date(dob);
+
+  let age = asOn.getFullYear() - birthDate.getFullYear();
+  const monthDiff = asOn.getMonth() - birthDate.getMonth();
+
+  if (monthDiff < 0 || (monthDiff === 0 && asOn.getDate() < birthDate.getDate())) {
+    age--;
+  }
+
+  return age;
+};
 
   const getEligibleAgeGroups = () => {
     const age = calculateAge(currentPlayer.dateOfBirth);
-    return mockAgeGroups.filter(ag => age >= ag.startAge && age <= ag.endAge);
+  return mockAgeGroups.filter(ag => age >= ag.startAge && age <= ag.endAge);
   };
 
   const getEligibleRaces = () => {
     if (!selectedEvent) return [];
-    return selectedEvent.races.filter(race => 
+    return selectedEvent?.races?.filter((race:any) => 
       race.genderEligibility === 'all' || race.genderEligibility === currentPlayer.gender
     );
   };
@@ -106,13 +146,13 @@ const UpcomingEvents: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {events.map(event => (
-          <Card key={event.id} className="overflow-hidden">
+        {upcomingEvents.map((event:any) => (
+          <Card key={event?.id} className="overflow-hidden">
             <div className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{event.name}</h3>
-                  <p className="text-gray-600 mb-3">{event.description}</p>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{event?.name}</h3>
+                  <p className="text-gray-600 mb-3">{event?.description}</p>
                 </div>
                 <Badge variant="success" size="sm">Open</Badge>
               </div>
@@ -120,16 +160,16 @@ const UpcomingEvents: React.FC = () => {
               <div className="space-y-3 mb-6">
                 <div className="flex items-center text-sm text-gray-600">
                   <MapPin size={16} className="mr-2 text-gray-400" />
-                  {event.venue}
+                  {event?.venue}
                 </div>
                 <div className="flex items-center text-sm text-gray-600">
                   <Calendar size={16} className="mr-2 text-gray-400" />
-                  {new Date(event.startDate).toLocaleDateString()} - {new Date(event.endDate).toLocaleDateString()}
+                  {new Date(event.eventDate).toLocaleDateString()}
                 </div>
-                <div className="flex items-center text-sm text-gray-600">
+                {/* <div className="flex items-center text-sm text-gray-600">
                   <Users size={16} className="mr-2 text-gray-400" />
-                  {event.totalParticipants} participants registered
-                </div>
+                  {event?.totalParticipants} participants registered
+                </div> */}
               </div>
 
               <div className="mb-6">
@@ -145,9 +185,9 @@ const UpcomingEvents: React.FC = () => {
               <div className="mb-6">
                 <h4 className="font-medium text-gray-900 mb-2">Age Groups:</h4>
                 <div className="flex flex-wrap gap-2">
-                  {event.ageGroups.map(ag => (
-                    <Badge key={ag.id} variant="default" size="sm">
-                      {ag.name}
+                  {event?.ageGroups?.map((ag:any) => (
+                    <Badge key={ag?.id} variant="default" size="sm">
+                      {ag?.ageGroupName}
                     </Badge>
                   ))}
                 </div>
@@ -156,12 +196,12 @@ const UpcomingEvents: React.FC = () => {
               <div className="mb-6">
                 <h4 className="font-medium text-gray-900 mb-2">Available Races:</h4>
                 <div className="space-y-1">
-                  {event.races.slice(0, 3).map(race => (
+                  {event?.races?.slice(0, 3).map((race:any) => (
                     <div key={race.id} className="text-sm text-gray-600">
                       • {race.name}
                     </div>
                   ))}
-                  {event.races.length > 3 && (
+                  {event?.races?.length > 3 && (
                     <div className="text-sm text-gray-500">
                       +{event.races.length - 3} more races
                     </div>
@@ -212,10 +252,10 @@ const UpcomingEvents: React.FC = () => {
                 <span className="font-medium">Venue:</span> {selectedEvent?.venue}
               </div>
               <div>
-                <span className="font-medium">Dates:</span> {selectedEvent && new Date(selectedEvent.startDate).toLocaleDateString()} - {selectedEvent && new Date(selectedEvent.endDate).toLocaleDateString()}
+                <span className="font-medium">Dates:</span> {selectedEvent && new Date(selectedEvent?.eventDate).toLocaleDateString()}
               </div>
               <div>
-                <span className="font-medium">Your Age:</span> {calculateAge(currentPlayer.dateOfBirth)} years
+                <span className="font-medium">Your Age:</span> {calculateAge(player?.dob, selectedEvent?.ageAsOnDate)} years
               </div>
             </div>
           </div>
@@ -228,9 +268,8 @@ const UpcomingEvents: React.FC = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             >
-              <option value="">Select your age group</option>
-              {eligibleAgeGroups.map(ag => (
-                <option key={ag.id} value={ag.id}>{ag.name}</option>
+              {selectedEvent?.ageGroups.map((ag:any) => (
+                <option key={ag?.id} value={ag?.id}>{ag?.ageGroupName}</option>
               ))}
             </select>
           </FormField>
@@ -256,7 +295,7 @@ const UpcomingEvents: React.FC = () => {
               Select Races (Maximum 3)
             </label>
             <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
-              {eligibleRaces.map(race => (
+              {eligibleRaces?.map((race:any) => (
                 <label key={race.id} className="flex items-center space-x-3 cursor-pointer">
                   <input
                     type="checkbox"
@@ -284,12 +323,12 @@ const UpcomingEvents: React.FC = () => {
             <div className="bg-blue-50 p-4 rounded-lg">
               <h4 className="font-medium text-blue-900 mb-2">Registration Summary</h4>
               <div className="space-y-1 text-sm text-blue-800">
-                <div>Age Group: {eligibleAgeGroups.find(ag => ag.id === registrationData.ageGroup)?.name}</div>
+                <div>Age Group: {eligibleAgeGroups.find((ag:any) => ag.id === registrationData.ageGroup)?.name}</div>
                 <div>Category: {registrationData.category.charAt(0).toUpperCase() + registrationData.category.slice(1)}</div>
                 <div>Selected Races: {registrationData.selectedRaces.length}</div>
                 <ul className="list-disc list-inside ml-4">
                   {registrationData.selectedRaces.map(raceId => {
-                    const race = eligibleRaces.find(r => r.id === raceId);
+                    const race = eligibleRaces.find((r:any) => r.id === raceId);
                     return <li key={raceId}>{race?.name}</li>;
                   })}
                 </ul>

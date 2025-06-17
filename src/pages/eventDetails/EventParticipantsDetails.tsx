@@ -13,19 +13,19 @@ const EventParticipantsDetails = () => {
     const [event, setEvent] = useState<any>(null);
 
     useEffect(() => {
-        axios.get(`${baseURL}/events/${eventId}`)
+        axios.get(`${baseURL}/registrations/fetch-by-event-id/${eventId}`)
             .then(res => setEvent(res.data))
             .catch(err => console.error(err));
     }, [eventId]);
 
     const columns = [
-        { key: 'id', label: 'Participant ID' },
+        { key: 'playerId', label: 'Participant ID' },
         { key: 'name', label: 'Name' },
+        { key: 'clubName', label: 'Club Name' },
         { key: 'chestNumber', label: 'Chest No' },
-        { key: 'age', label: 'Age' },
-        { key: 'category', label: 'Category' },
-        { key: 'status', label: 'Status' },
-        { key: 'amount', label: 'Amount' },
+        { key: 'ageGroup', label: 'Age' },
+        { key: 'skateCategory', label: 'Category' },
+        { key: 'amountPaid', label: 'Amount' },
     ];
 
     return (
@@ -35,7 +35,7 @@ const EventParticipantsDetails = () => {
             <Card>
                 <Table
                     columns={columns}
-                    data={event?.participants || []}
+                    data={event || []}
                 />
             </Card>
         </div>

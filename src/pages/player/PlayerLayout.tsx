@@ -10,6 +10,7 @@ import {
   Menu,
   X
 } from 'lucide-react';
+import { usePlayer } from '../../context/PlayerContext';
 
 const PlayerLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
@@ -27,6 +28,8 @@ const PlayerLayout: React.FC = () => {
     profileImage: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100'
   };
 
+    const { player } = usePlayer();
+    console.log(player, "player");
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Mobile sidebar overlay */}
@@ -63,21 +66,18 @@ const PlayerLayout: React.FC = () => {
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-700">
               <img
-                src={currentPlayer.profileImage}
-                alt={currentPlayer.name}
+                src={player?.profileImageUrl}
+                alt={player?.name}
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100';
-                }}
+                
               />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-white truncate">
-                {currentPlayer.name}
+                {player?.name}
               </p>
               <p className="text-xs text-slate-400 truncate">
-                {currentPlayer.club}
+                {player?.clubName}
               </p>
             </div>
           </div>

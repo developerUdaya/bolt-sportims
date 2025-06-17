@@ -6,6 +6,7 @@ import Badge from '../../components/UI/Badge';
 import Card from '../../components/UI/Card';
 import axios from 'axios';
 import { useClubs } from '../../context/ClubContext';
+import { toast } from 'react-toastify';
 
 // Define Club type based on provided data
 interface Club {
@@ -33,35 +34,37 @@ const ClubsApproval: React.FC = () => {
     const { clubs, fetchClubs } = useClubs();
     const [pendingClubs, setPendingClubs] = useState<Club[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const baseURL = import.meta.env.VITE_API_BASE_URL 
+    const baseURL = import.meta.env.VITE_API_BASE_URL
 
     // Filter pending clubs
     useEffect(() => {
-        setPendingClubs(clubs?.filter((club:any) => club.approvalStatus === 'pending'));
+        return setPendingClubs(clubs?.filter((club: any) => club?.approvalStatus === 'pending'));
     }, []);
 
     const handleApprove = async (clubId: number) => {
         try {
-            await axios.put(`${baseURL}/clubs/${clubId}/approve`);
+            const res = await axios.put(`${baseURL}/clubs/${clubId}/approve`);
+            toast.success(res?.data?.message || 'Data approved!')
             await fetchClubs(); // Refresh context data
             setPendingClubs((prev) => prev.filter((club) => club.id !== clubId)); // Optimistic update
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to approve club:', error);
-            alert('Failed to approve club. Please try again.');
+            toast.error(error?.res?.data?.message || 'Data approved failed!')
         }
     };
 
     const handleReject = async (clubId: number) => {
         try {
-            await axios.put(`${baseURL}/clubs/${clubId}/reject`, {
+            const res = await axios.put(`${baseURL}/clubs/${clubId}/reject/`, {
                 approvalStatus: 'rejected',
                 updatedAt: new Date().toISOString(),
             });
+            toast.success(res.data.message || 'Data rejected!')
             await fetchClubs(); // Refresh context data
             setPendingClubs((prev) => prev.filter((club) => club.id !== clubId)); // Optimistic update
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to reject club:', error);
-            alert('Failed to reject club. Please try again.');
+            toast.error(error?.res?.data?.message || 'Data rejected failed!')
         }
     };
 
@@ -78,7 +81,7 @@ const ClubsApproval: React.FC = () => {
             label: 'Actions',
             render: (_value: any, club: Club) => (
                 <div className="flex items-center space-x-2">
-                    <Button
+                    {/* <Button
                         size="sm"
                         variant="secondary"
                         onClick={() => alert(`View details for club ${club.clubName}`)} // Placeholder
@@ -91,7 +94,7 @@ const ClubsApproval: React.FC = () => {
                         onClick={() => alert(`Edit club ${club.clubName}`)} // Placeholder
                     >
                         <Edit size={16} />
-                    </Button>
+                    </Button> */}
                     <Button
                         size="sm"
                         variant="success"

@@ -9,6 +9,7 @@ import { useClubs } from '../../context/ClubContext';
 import axios from 'axios';
 import Badge from '../../components/UI/Badge';
 import { exportToExcel } from '../../ExportToExcel/ExportToExcel';
+import { toast } from 'react-toastify';
 
 const clubsData: React.FC = () => {
 
@@ -48,15 +49,34 @@ const clubsData: React.FC = () => {
     setclubsData(clubs);
   }, [clubs, fetchClubs]);
 
+  // const handleSearch = (query: string) => {
+  //   const filtered = clubs
+  //     .filter((c: any) => c.approved)
+  //     .filter((club: any) =>
+  //       club.name.toLowerCase().includes(query.toLowerCase()) ||
+  //       club.email.toLowerCase().includes(query.toLowerCase()) ||
+  //       club.clubId.toLowerCase().includes(query.toLowerCase()) ||
+  //       club.contactPerson.toLowerCase().includes(query.toLowerCase())
+  //     );
+  //   setclubsData(filtered);
+  // };
+
   const handleSearch = (query: string) => {
-    const filtered = clubs
-      .filter((c: any) => c.approved)
-      .filter((club: any) =>
-        club.name.toLowerCase().includes(query.toLowerCase()) ||
-        club.email.toLowerCase().includes(query.toLowerCase()) ||
-        club.clubId.toLowerCase().includes(query.toLowerCase()) ||
-        club.contactPerson.toLowerCase().includes(query.toLowerCase())
-      );
+    let filtered = clubs;
+
+    // Apply status filter first if not 'all'
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter((club: any) => club.approvalStatus === statusFilter);
+    }
+
+    // Apply search query
+    filtered = filtered.filter((club: any) =>
+      club?.clubName?.toLowerCase().includes(query.toLowerCase()) ||
+      club?.coachName?.toLowerCase().includes(query.toLowerCase()) ||
+      club?.districtName?.toLowerCase().includes(query.toLowerCase()) ||
+      club?.email?.toLowerCase().includes(query.toLowerCase())
+    );
+
     setclubsData(filtered);
   };
 
@@ -83,10 +103,12 @@ const clubsData: React.FC = () => {
   const handleDeleteClub = async (clubId: string) => {
     if (confirm('Are you sure you want to delete this club?')) {
       try {
-        await axios.delete(`${baseURL}/clubs/${clubId}`);
+        const res = await axios.delete(`${baseURL}/clubs/${clubId}`);
+        toast.success(res?.data?.message || 'Club deleted successfuly!')
         fetchClubs()
-      } catch (error) {
+      } catch (error: any) {
         console.error('Delete failed:', error);
+        toast.error(error?.res?.data?.message || 'Club deleted failed!')
       }
     }
   };
@@ -95,14 +117,17 @@ const clubsData: React.FC = () => {
   const handleSaveClub = async (clubData: any) => {
     try {
       if (modalMode === 'create') {
-        await axios.post(`${baseURL}/clubs/register`, clubData);
+        const res = await axios.post(`${baseURL}/clubs/register`, clubData);
+        toast.success(res?.data?.message || 'Club added successfully!')
       } else if (modalMode === 'edit' && selectedClub) {
-        await axios.put(`${baseURL}/clubs/${selectedClub.id}`, clubData);
+        const res = await axios.put(`${baseURL}/clubs/${selectedClub.id}`, clubData);
+        toast.success(res?.data?.message || 'Club updated successfully!')
       }
       setShowModal(false);
       fetchClubs()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Save failed:', error);
+      toast.success(error?.res?.data?.message || 'Club failed to add!')
     }
   }
 
@@ -124,11 +149,24 @@ const clubsData: React.FC = () => {
       key: 'approvalStatus',
       label: 'Status',
       sortable: true,
-      render: (value: string) => (
-        <Badge variant={value === 'approved' ? 'success' : 'warning'} size="sm">
-          {value === 'approved' ? 'Approved' : 'Pending'}
-        </Badge>
-      ),
+      render: (value: string) => {
+        let variant: 'success' | 'warning' | 'danger' = 'warning';
+        let label = 'Pending';
+
+        if (value === 'approved') {
+          variant = 'success';
+          label = 'Approved';
+        } else if (value === 'rejected') {
+          variant = 'danger';
+          label = 'Rejected';
+        }
+
+        return (
+          <Badge variant={variant} size="sm">
+            {label}
+          </Badge>
+        );
+      }
     },
     {
       key: 'actions',
@@ -157,7 +195,7 @@ const clubsData: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className='flex justify-end'>
-        <Button variant="secondary" onClick={() => exportToExcel(clubsData,'club_list')}>
+        <Button variant="secondary" onClick={() => exportToExcel(clubsData, 'club_list')}>
           Export to Excel
         </Button>
       </div>
@@ -168,7 +206,7 @@ const clubsData: React.FC = () => {
         </div>
         <Button variant="primary" onClick={handleCreateClub}>
           <Plus size={16} className="mr-2" />
-          Add New Secretary
+          Add New Club
         </Button>
       </div>
 

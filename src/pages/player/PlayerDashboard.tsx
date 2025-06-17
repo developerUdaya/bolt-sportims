@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Calendar, Trophy, Medal, Users, Bell, TrendingUp } from 'lucide-react';
 import Card from '../../components/UI/Card';
 import Badge from '../../components/UI/Badge';
 import Button from '../../components/UI/Button';
 import { mockEvents, mockPlayerResults } from '../../data/mockData';
+import axios from 'axios';
+import { usePlayer } from '../../context/PlayerContext';
 
 const PlayerDashboard: React.FC = () => {
   // Mock current player data
@@ -18,7 +20,10 @@ const PlayerDashboard: React.FC = () => {
     bestRank: 1
   };
 
-  const upcomingEvents = mockEvents.filter(event => event.status === 'upcoming');
+  const { player } = usePlayer();
+  console.log(player, "player");
+
+  // const upcomingEvents = mockEvents.filter(event => event.status === 'upcoming');
   const recentResults = mockPlayerResults.slice(0, 3);
 
   const newsUpdates = [
@@ -36,6 +41,32 @@ const PlayerDashboard: React.FC = () => {
     }
   ];
 
+  const baseURL = import.meta.env.VITE_API_BASE_URL;
+  const [upcomingEvents, setUpcomingEvents] = useState<any>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`${baseURL}/events`);
+        console.log(response);
+
+        const currentDate = new Date(); // Dynamic current date
+        const events = response.data.filter((event: any) => new Date(event.eventDate) > currentDate);
+        setUpcomingEvents(events);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch events:', err);
+        setError('Failed to load upcoming events. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEvents();
+  }, [baseURL]);
+
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
@@ -43,20 +74,20 @@ const PlayerDashboard: React.FC = () => {
         <div className="flex items-center space-x-6">
           <div className="w-20 h-20 rounded-full overflow-hidden bg-white/20">
             <img
-              src={currentPlayer.profileImage}
-              alt={currentPlayer.name}
+              src={player?.profileImageUrl}
+              alt={player?.name}
               className="w-full h-full object-cover"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200';
-              }}
+              // onError={(e) => {
+              //   const target = e.target as HTMLImageElement;
+              //   target.src = 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200';
+              // }}
             />
           </div>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold">Welcome back, {currentPlayer.name}!</h1>
-            <p className="text-blue-100 mt-1">{currentPlayer.club} • {currentPlayer.category.charAt(0).toUpperCase() + currentPlayer.category.slice(1)} Category</p>
-            
-            <div className="grid grid-cols-3 gap-6 mt-4">
+            <h1 className="text-2xl font-bold">Welcome back, {player?.name}!</h1>
+            <p className="text-blue-100 mt-1">{player?.clubName} • {player?.skateCategory} Category</p>
+
+            {/* <div className="grid grid-cols-3 gap-6 mt-4">
               <div className="text-center">
                 <div className="text-2xl font-bold">{currentPlayer.eventsParticipated}</div>
                 <div className="text-sm text-blue-100">Events Participated</div>
@@ -69,7 +100,7 @@ const PlayerDashboard: React.FC = () => {
                 <div className="text-2xl font-bold">#{currentPlayer.bestRank}</div>
                 <div className="text-sm text-blue-100">Best Rank</div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </Card>
@@ -78,36 +109,43 @@ const PlayerDashboard: React.FC = () => {
         {/* Upcoming Events */}
         <div className="lg:col-span-2">
           <Card title="Upcoming Events - Open for Registration">
-            <div className="space-y-4">
-              {upcomingEvents.map(event => (
-                <div key={event.id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">{event.name}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{event.venue}</p>
-                      <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                        <span>{new Date(event.startDate).toLocaleDateString()} - {new Date(event.endDate).toLocaleDateString()}</span>
-                        <Badge variant="success" size="sm">Open for Registration</Badge>
+            {loading ? (
+              <div className="text-center py-8 text-gray-500">Loading events...</div>
+            ) : error ? (
+              <div className="text-center py-8 text-red-500">{error}</div>
+            ) : (
+              <div className="space-y-4">
+                {upcomingEvents.map((event: any) => (
+                  <div key={event.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900">{event.name}</h3>
+                        <p className="text-sm text-gray-600 mt-1">{event.venue}</p>
+                        <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
+                          <span>{new Date(event.eventDate).toLocaleDateString()}</span>
+                          <Badge variant="success" size="sm">Open for Registration</Badge>
+                        </div>
+                        <div className="mt-2">
+                          <p className="text-sm text-gray-600">Available: Beginner, Fancy, Inline categories</p>
+                          {/* <p className="text-sm text-gray-600">Age Groups: 4-6, 7-9, 10-12, 13-15 years</p> */}
+                        </div>
                       </div>
-                      <div className="mt-2">
-                        <p className="text-sm text-gray-600">Available: Beginner, Fancy, Inline categories</p>
-                        <p className="text-sm text-gray-600">Age Groups: 4-6, 7-9, 10-12, 13-15 years</p>
-                      </div>
+                      {/* <Button variant="primary" size="sm">
+                        Register
+                      </Button> */}
                     </div>
-                    <Button variant="primary" size="sm">
-                      Register
-                    </Button>
                   </div>
-                </div>
-              ))}
-              {upcomingEvents.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  No upcoming events available for registration
-                </div>
-              )}
-            </div>
+                ))}
+                {upcomingEvents.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    No upcoming events available for registration
+                  </div>
+                )}
+              </div>
+            )}
           </Card>
         </div>
+
 
         {/* News & Updates */}
         <div>
@@ -137,11 +175,10 @@ const PlayerDashboard: React.FC = () => {
               <div className="flex items-center justify-between mb-2">
                 <h4 className="font-medium text-gray-900">{result.eventName}</h4>
                 {result.medal && (
-                  <Medal className={`w-5 h-5 ${
-                    result.medal === 'gold' ? 'text-yellow-500' :
+                  <Medal className={`w-5 h-5 ${result.medal === 'gold' ? 'text-yellow-500' :
                     result.medal === 'silver' ? 'text-gray-400' :
-                    'text-orange-600'
-                  }`} />
+                      'text-orange-600'
+                    }`} />
                 )}
               </div>
               <p className="text-sm text-gray-600">{result.raceName}</p>
@@ -168,7 +205,7 @@ const PlayerDashboard: React.FC = () => {
             <p className="text-sm text-gray-600 mt-1">View registered events</p>
           </div>
         </Card>
-        
+
         <Card>
           <div className="text-center">
             <Trophy className="mx-auto h-8 w-8 text-yellow-500 mb-2" />
@@ -176,7 +213,7 @@ const PlayerDashboard: React.FC = () => {
             <p className="text-sm text-gray-600 mt-1">View all results</p>
           </div>
         </Card>
-        
+
         <Card>
           <div className="text-center">
             <Users className="mx-auto h-8 w-8 text-green-500 mb-2" />
@@ -184,7 +221,7 @@ const PlayerDashboard: React.FC = () => {
             <p className="text-sm text-gray-600 mt-1">Manage profile</p>
           </div>
         </Card>
-        
+
         <Card>
           <div className="text-center">
             <TrendingUp className="mx-auto h-8 w-8 text-purple-500 mb-2" />

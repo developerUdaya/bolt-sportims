@@ -27,6 +27,8 @@ const Players: React.FC = () => {
   const fetchPlayers = async () => {
     try {
       const response = await axios.get(`${baseURL}/players/`);
+      console.log(response?.data, "datttaaaa");
+
       setPlayers(response.data);
     } catch (error) {
       console.error('Failed to fetch players:', error);
@@ -89,10 +91,12 @@ const Players: React.FC = () => {
   const handleDeletePlayer = async (playerId: number) => {
     if (confirm('Are you sure you want to delete this player?')) {
       try {
-        await axios.delete(`${baseURL}/players/${playerId}`);
+        const res = await axios.delete(`${baseURL}/players/${playerId}`);
+        toast.success(res?.data?.message || "Data deleted successfuly!")
         fetchPlayers();
-      } catch (error) {
+      } catch (error: any) {
         console.error('Delete failed:', error);
+        toast.error(error?.res?.data?.message || 'Data failed to delete!')
       }
     }
   };
@@ -100,11 +104,12 @@ const Players: React.FC = () => {
   const handleSavePlayer = async (playerData: Partial<Player>) => {
     try {
       if (modalMode === 'create') {
-        const response = await axios.post(`${baseURL}/players/register`, playerData);
+        const response = await axios.post(`${baseURL}/players/register/`, playerData);
         toast.success(response?.data?.message || 'Player added successfully!');
 
       } else if (modalMode === 'edit' && selectedPlayer) {
-        await axios.put(`${baseURL}/players/${selectedPlayer.playerId}`, playerData);
+        const response = await axios.put(`${baseURL}/players/${selectedPlayer.playerId}`, playerData);
+        toast.success(response?.data?.message || 'Player updated successfully!');
       }
       setShowModal(false);
       fetchPlayers();
@@ -161,11 +166,24 @@ const Players: React.FC = () => {
       key: 'approvalStatus',
       label: 'Status',
       sortable: true,
-      render: (value: string) => (
-        <Badge variant={value === 'approved' ? 'success' : 'warning'} size="sm">
-          {value === 'approved' ? 'Approved' : 'Pending'}
-        </Badge>
-      ),
+      render: (value: string) => {
+        let variant: 'success' | 'warning' | 'danger' = 'warning';
+        let label = 'Pending';
+
+        if (value === 'approved') {
+          variant = 'success';
+          label = 'Approved';
+        } else if (value === 'rejected') {
+          variant = 'danger';
+          label = 'Rejected';
+        }
+
+        return (
+          <Badge variant={variant} size="sm">
+            {label}
+          </Badge>
+        );
+      }
     },
     {
       key: 'actions',
@@ -195,7 +213,7 @@ const Players: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className='flex justify-end'>
-        <Button variant="secondary" onClick={() => exportToExcel(players,'player_list')}>
+        <Button variant="secondary" onClick={() => exportToExcel(players, 'player_list')}>
           Export to Excel
         </Button>
       </div>
@@ -207,7 +225,7 @@ const Players: React.FC = () => {
         </div>
         <Button variant="primary" onClick={handleCreatePlayer}>
           <Plus size={16} className="mr-2" />
-          Add New Secretary
+          Add New Player
         </Button>
       </div>
 

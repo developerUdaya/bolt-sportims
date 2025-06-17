@@ -4,8 +4,8 @@ import Table from '../../components/UI/Table';
 import Button from '../../components/UI/Button';
 import Badge from '../../components/UI/Badge';
 import Card from '../../components/UI/Card';
-import { Player } from '../../types';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const baseURL = import.meta.env.VITE_API_BASE_URL;
 const PlayersApproval: React.FC = () => {
@@ -15,21 +15,24 @@ const PlayersApproval: React.FC = () => {
 
   const handleApprove = async (playerId: string) => {
     try {
-      await axios.put(`${baseURL}/players/${playerId}/approve`);
+      const res = await axios.put(`${baseURL}/players/${playerId}/approve`);
+      toast.success(res?.data?.message || 'Player approved.')
       fetchPlayers(); // Refresh the pending players list
-    } catch (error) {
+    } catch (error: any) {
+      toast.error(error?.res?.data?.message || "Failed to approve player")
       console.error(`Failed to approve player ${playerId}:`, error);
     }
   };
 
-   const handleReject = async (playerId: number) => {
+  const handleReject = async (playerId: number) => {
     try {
-      await axios.delete(`${baseURL}/players/${playerId}`);
+     const res= await axios.delete(`${baseURL}/players/${playerId}`);
+     toast.success(res?.data?.message || 'Data rejected succesfully!')
       await fetchPlayers(); // Refresh data
-      setPendingPlayers((prev:any) => prev.filter((player:any) => player.id !== playerId)); // Optimistic update
-    } catch (error) {
+      setPendingPlayers((prev: any) => prev.filter((player: any) => player.id !== playerId)); // Optimistic update
+    } catch (error:any) {
       console.error(`Failed to reject player ${playerId}:`, error);
-      alert('Failed to reject player. Please try again.');
+   toast.error(error?.res?.data?.message || 'Data rejected failed')
     }
   };
 
@@ -100,12 +103,12 @@ const PlayersApproval: React.FC = () => {
       label: 'Actions',
       render: (value: any, player: any) => (
         <div className="flex items-center space-x-2">
-          <Button size="sm" variant="secondary">
+          {/* <Button size="sm" variant="secondary">
             <Eye size={16} />
           </Button>
           <Button size="sm" variant="primary">
             <Edit size={16} />
-          </Button>
+          </Button> */}
           <Button
             size="sm"
             variant="success"

@@ -6,6 +6,7 @@ import Badge from '../../components/UI/Badge';
 import Card from '../../components/UI/Card';
 import { District } from '../../types';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const DistrictsApproval: React.FC = () => {
     const baseURL = import.meta.env.VITE_API_BASE_URL;
@@ -28,16 +29,30 @@ const DistrictsApproval: React.FC = () => {
 
     const handleApprove = async (playerId: string) => {
         try {
-            await axios.put(`${baseURL}/district_secretaries/${playerId}/approve`);
+           const res= await axios.put(`${baseURL}/district_secretaries/${playerId}/approve`);
+           toast.success(res?.data?.message || 'Data approved!')
             fetchSecretaries(); // Refresh the pending players list
-        } catch (error) {
+        } catch (error:any) {
             console.error(`Failed to approve district secretaries ${playerId}:`, error);
+            toast.error(error?.res?.data?.message || 'Data Approve failed!')
         }
     };
-    const handleReject = (playerId: string) => {
-        setPendingDistrict((prev: any) => prev.filter((p: any) => p.id !== playerId));
-        // In real app, would make API call to reject
-    };
+    // const handleReject = (playerId: string) => {
+    //     setPendingDistrict((prev: any) => prev.filter((p: any) => p.id !== playerId));
+    //     // In real app, would make API call to reject
+    // };
+    const handleReject = async (playerId: string) => {
+    if (confirm('Are you sure you want to reject this player?')) {
+        try {
+         const res=   await axios.delete(`${baseURL}/players/${playerId}`);
+         toast.success(res?.data?.message || 'Data rejected!')
+            setPendingDistrict((prev: any) => prev.filter((p: any) => p.id !== playerId));
+        } catch (error:any) {
+            console.error('Reject failed:', error);
+            toast.error(error?.res?.data?.message || 'data reject failed!')
+        }
+    }
+};
 
     const columns = [
         { key: 'secretaryName', label: 'Secretary Name', sortable: true },
@@ -58,12 +73,12 @@ const DistrictsApproval: React.FC = () => {
             label: 'Actions',
             render: (value: any, player: District) => (
                 <div className="flex items-center space-x-2">
-                    <Button size="sm" variant="secondary">
+                    {/* <Button size="sm" variant="secondary">
                         <Eye size={16} />
                     </Button>
                     <Button size="sm" variant="primary">
                         <Edit size={16} />
-                    </Button>
+                    </Button> */}
                     <Button
                         size="sm"
                         variant="success"
