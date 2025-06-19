@@ -1,7 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout/Layout';
-import PlayerLayout from './pages/player/PlayerLayout';
-import OfficialLayout from './pages/official/OfficialLayout';
 import ClubLayout from './pages/club/ClubLayout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
