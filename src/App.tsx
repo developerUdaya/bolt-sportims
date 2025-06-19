@@ -45,15 +45,6 @@ function App() {
         {/* Admin Routes */}
         <Route path="/" element={<Layout />}>
           <Route index element={<Dashboard />} />
-          <Route path="users/players" element={<Players />} />
-          <Route path="users/clubs" element={<Clubs />} />
-          <Route path="users/districts" element={<Districts />} />
-          <Route path="users/states" element={<States />} />
-          <Route path="users/admins" element={<Admins />} />
-          <Route path="approvals/players" element={<PlayersApproval />} />
-          <Route path="approvals/clubs" element={<ClubsApproval />} />
-          <Route path="approvals/districts" element={<DistrictsApproval />} />
-          <Route path="approvals/states" element={<StatesApproval />} />
           <Route path="events" element={<Events />} />
           <Route path="/eventsDetails/participation" element={<EventParticipation />} />
           <Route path="/eventsDetails/event-participation/:eventId" element={<EventParticipantsDetails />} />
