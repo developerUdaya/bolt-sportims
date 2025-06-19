@@ -41,7 +41,6 @@ function App() {
         draggable
       />
       <Routes>
-        <Route path="/login" element={<Login />} />
 
         {/* Admin Routes */}
         <Route path="/" element={<Layout />}>
@@ -65,32 +64,8 @@ function App() {
           <Route path="news" element={<News />} />
         </Route>
 
-        {/* Player Routes */}
-        <Route path="/player" element={<PlayerLayout />}>
-          <Route index element={<PlayerDashboard />} />
-          <Route path="events" element={<UpcomingEvents />} />
-          <Route path="my-events" element={<MyEvents />} />
-          <Route path="profile" element={<PlayerProfile />} />
-        </Route>
-
-        {/* Event Official Routes */}
-        <Route path="/official" element={<OfficialLayout />}>
-          <Route index element={<OfficialDashboard />} />
-          <Route path="schedules" element={<ScheduleManagement />} />
-          <Route path="update-results" element={<UpdateResults />} />
-          <Route path="results" element={<ResultsView />} />
-          <Route path="participants" element={<ParticipantsView />} />
-          <Route path="reports" element={<ReportsPage />} />
-        </Route>
-
-        {/* Club Routes */}
-        <Route path="/club" element={<ClubLayout />}>
-          <Route index element={<ClubDashboard />} />
-          <Route path="players" element={<ClubPlayers />} />
-          <Route path="events" element={<ClubEvents />} />
-          <Route path="reports" element={<ClubReports />} />
-          <Route path="profile" element={<ClubProfile />} />
-        </Route>
+      
+       
       </Routes>
     </Router>
   );
