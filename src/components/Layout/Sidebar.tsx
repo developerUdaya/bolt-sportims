@@ -23,15 +23,6 @@ const Sidebar: React.FC = () => {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
 
     { icon: Calendar, label: 'Events', path: '/events' },
-    {
-      icon: Cog,
-      label: 'Events Details',
-      path: '/eventsDetails',
-      submenu: [
-        { label: 'Event Participation', path: '/eventsDetails/participation' },
-        { label: 'Payment Report', path: '/eventsDetails/payment' },
-      ]
-    },
 
   ];
 
