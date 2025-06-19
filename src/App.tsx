@@ -4,8 +4,6 @@ import Dashboard from './pages/Dashboard';
 import Events from './pages/Events';
 import EventParticipation from './pages/eventDetails/EventParticipation';
 import PaymentReport from './pages/eventDetails/PaymentReport';
-import EventOfficial from './pages/EventOfficial';
-import EventOrganisers from './pages/EventOrganisers';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import EventParticipantsDetails from './pages/eventDetails/EventParticipantsDetails';
