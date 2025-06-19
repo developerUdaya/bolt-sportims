@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { Edit, Trash2, Eye, Plus } from 'lucide-react';
+import { Edit, Trash2, Eye, Plus, Download } from 'lucide-react';
 import Table from '../../components/UI/Table';
 import Button from '../../components/UI/Button';
 import Badge from '../../components/UI/Badge';
@@ -212,21 +212,25 @@ const Players: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className='flex justify-end'>
-        <Button variant="secondary" onClick={() => exportToExcel(players, 'player_list')}>
-          Export to Excel
-        </Button>
-      </div>
+      
 
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Players Management</h1>
           <p className="text-gray-600 mt-1">Manage registered players</p>
         </div>
+        <div className='flex justify-end gap-2'>
         <Button variant="primary" onClick={handleCreatePlayer}>
           <Plus size={16} className="mr-2" />
           Add New Player
         </Button>
+         <Button variant="secondary" onClick={() => exportToExcel(players, 'player_list')}>
+          <Download size={16} className='mr-2'/>
+          Export to Excel
+        </Button>
+      </div>
+
+        
       </div>
 
       {/* Summary Cards */}

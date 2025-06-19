@@ -1,3 +1,5 @@
+
+
 export interface User {
   id: string;
   name: string;
@@ -195,3 +197,12 @@ export type EventOrganiserType = {
   event: string;
   status: boolean;
 };
+
+
+
+export type Count={
+  players:number;
+  clubs:number;
+  districtSecretries:number;
+  stateSecretries:number;
+}

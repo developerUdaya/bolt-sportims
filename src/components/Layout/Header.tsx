@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bell, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Header: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -17,10 +18,14 @@ const Header: React.FC = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+const navigate = useNavigate();
 
   const handleLogout = () => {
     console.log('Logging out...');
     // Your logout logic here
+    localStorage.removeItem("user");
+navigate("/login");
+
   };
 
   return (

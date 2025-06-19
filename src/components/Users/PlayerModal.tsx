@@ -24,6 +24,7 @@ interface Player {
   skateCategory?: string;
   mobileNumber?: string;
   email?: string;
+  approvalStatus?:string;
 }
 
 interface PlayerModalProps {
@@ -53,6 +54,7 @@ const PlayerModal: React.FC<PlayerModalProps> = ({ isOpen, onClose, onSave, play
     skateCategory: 'Beginner',
     mobileNumber: '',
     email: '',
+    approvalStatus:''
   });
 
   React.useEffect(() => {
@@ -75,6 +77,7 @@ const PlayerModal: React.FC<PlayerModalProps> = ({ isOpen, onClose, onSave, play
         aadharNumber: player.aadharNumber || '',
         skateCategory: player.skateCategory || 'Beginner',
         mobileNumber: player.mobileNumber || '',
+        approvalStatus: player.approvalStatus||'pending'
       });
     } else {
       // Reset form for create mode
@@ -306,6 +309,21 @@ const PlayerModal: React.FC<PlayerModalProps> = ({ isOpen, onClose, onSave, play
             />
           </FormField>
         </div>
+
+         {mode !== 'view' && (
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="approved"
+              checked={formData.approvalStatus=='approved' || false}
+              onChange={(e) => setFormData({ ...formData, approvalStatus: e.target.checked?'approved':'pending' })}
+              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+            />
+            <label htmlFor="approved" className="ml-2 text-sm text-gray-700">
+              Approve player registration
+            </label>
+          </div>
+        )}
 
         {mode !== 'view' && (
           <div className="flex justify-end space-x-3 pt-4 border-t">

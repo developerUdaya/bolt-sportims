@@ -6,16 +6,51 @@ import Badge from '../components/UI/Badge';
 import { mockDashboardStats } from '../data/mockData';
 import axios from 'axios';
 import { useDashboardCounts } from '../context/DashboardCountContext';
+import { Count } from '../types';
+import { api } from '../lib/api';
 
 const Dashboard: React.FC = () => {
-   const counts = useDashboardCounts();
-  const stats = mockDashboardStats;
+
+  const [counts,setCounts]= useState<Count|null>(null);
+  const [birthdays, setBirthdays] = useState<any[]>([]); // using 'any[]'
+
+  //  const counts = useDashboardCounts();
+  // const stats = mockDashboardStats;
   const baseURL = import.meta.env.VITE_API_BASE_URL;
 
+
+
   const [events, setEvents] = useState<any>([]);
+
+
+  
   useEffect(() => {
     fetchEvents();
+    fetchUsersCounts();
+    fetchUpcomingBirthdays();
   }, []);
+
+  const fetchUsersCounts = async () =>{
+    try {
+      const response = await api.get('counts/approved_users/');
+      setCounts(response.data.counts);
+
+    }catch(e){
+      console.error("Error fetching counts:", e);
+    }
+
+  };
+
+  const fetchUpcomingBirthdays = async ()=>{
+    try{
+      const res = await api.get('players/upcoming-birthdays');
+      setBirthdays(res.data);
+    }
+    catch(e){
+
+    }
+
+  };
 
   const fetchEvents = async () => {
     try {
@@ -41,35 +76,35 @@ const Dashboard: React.FC = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600 mt-1">Welcome to Sports Management ERP System</p>
+        <p className="text-gray-600 mt-1">Welcome to SportIMS</p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
           title="Registered Players"
-          value={counts?.players}
+          value={counts?.players?? 0 }
           icon={Users}
           color="blue"
           trend={{ value: 12, isPositive: true }}
         />
         <StatsCard
           title="Registered Clubs"
-          value={counts?.clubs}
+          value={counts?.clubs ?? 0 }
           icon={Building2}
           color="green"
           trend={{ value: 8, isPositive: true }}
         />
         <StatsCard
           title="Districts"
-          value={counts?.districtSecretaries}
+          value={counts?.districtSecretries ?? 0}
           icon={MapPin}
           color="yellow"
           trend={{ value: 0, isPositive: true }}
         />
         <StatsCard
           title="States"
-          value={counts?.stateSecretaries}
+          value={counts?.stateSecretries ?? 0}
           icon={Map}
           color="purple"
           trend={{ value: 0, isPositive: true }}
@@ -120,28 +155,28 @@ const Dashboard: React.FC = () => {
         {/* Upcoming Birthdays */}
         <Card title="Upcoming Player Birthdays">
           <div className="space-y-4">
-            {stats.upcomingBirthdays.map((player) => (
-              <div key={player.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            {birthdays.map((birthdays) => (
+              <div key={birthdays.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-pink-100 rounded-lg">
                     <Gift className="text-pink-600" size={20} />
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">{player.name}</p>
-                    <p className="text-sm text-gray-500">{player.clubName}</p>
+                    <p className="font-medium text-gray-900">{birthdays.name}</p>
+                    <p className="text-sm text-gray-500">{birthdays.playerId}</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-medium text-gray-900">
-                    Age {calculateAge(player.dateOfBirth) + 1}
+                    Age {calculateAge(birthdays.dob) + 1}
                   </p>
                   <p className="text-sm text-gray-500">
-                    {new Date(player.dateOfBirth).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    {new Date(birthdays.dob).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </p>
                 </div>
               </div>
             ))}
-            {stats.upcomingBirthdays.length === 0 && (
+            {birthdays.length === 0 && (
               <p className="text-gray-500 text-center py-4">No upcoming birthdays</p>
             )}
           </div>
@@ -149,7 +184,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Recent Activity */}
-      {/* <Card title="Recent Activity">
+      <Card title="Recent Activity">
         <div className="space-y-4">
           <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -173,7 +208,7 @@ const Dashboard: React.FC = () => {
             <span className="text-xs text-gray-500 ml-auto">3 days ago</span>
           </div>
         </div>
-      </Card> */}
+      </Card> 
     </div>
   );
 };

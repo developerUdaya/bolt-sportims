@@ -8,6 +8,9 @@ import ClubRegistrationModal from '../components/Registration/ClubRegistrationMo
 import DistrictRegistrationModal from '../components/Registration/DistrictRegistrationModal';
 import StateRegistrationModal from '../components/Registration/StateRegistrationModal';
 
+const ADMIN_USERNAME = 'admin';
+const ADMIN_PASSWORD = '123456';
+
 const Login: React.FC = () => {
   const [loginType, setLoginType] = React.useState<'admin' | 'player'>('admin');
   const [showPassword, setShowPassword] = React.useState(false);
@@ -21,6 +24,7 @@ const Login: React.FC = () => {
   });
   const [otpSent, setOtpSent] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
+  const [adminError, setAdminError] = React.useState<string | null>(null);
 
   // Registration modal states
   const [showPlayerRegistration, setShowPlayerRegistration] = React.useState(false);
@@ -31,18 +35,28 @@ const Login: React.FC = () => {
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate API call
+    setAdminError(null);
     setTimeout(() => {
       setLoading(false);
-      // Handle admin login logic here
-      console.log('Admin login:', adminCredentials);
+      if (
+        adminCredentials.username === ADMIN_USERNAME &&
+        adminCredentials.password === ADMIN_PASSWORD
+      ) {
+        // Successful login
+        console.log('Admin login successful:', adminCredentials);
+        localStorage.setItem("user", JSON.stringify({ username: adminCredentials.username, role: 'admin' }));
+
+        window.location.href = '/';
+        // Redirect or further logic here
+      } else {
+        setAdminError('Invalid username or password');
+      }
     }, 1000);
   };
 
   const handleSendOTP = async () => {
     if (!playerCredentials.mobileNumber) return;
     setLoading(true);
-    // Simulate OTP sending
     setTimeout(() => {
       setLoading(false);
       setOtpSent(true);
@@ -52,7 +66,6 @@ const Login: React.FC = () => {
   const handlePlayerLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate API call
     setTimeout(() => {
       setLoading(false);
       // Handle player login logic here
@@ -69,8 +82,8 @@ const Login: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Sports Management</h1>
-          <p className="text-gray-600">ERP System Login</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">SportIMS</h1>
+          <p className="text-gray-600">Sports Management System</p>
         </div>
 
         <Card>
@@ -133,6 +146,10 @@ const Login: React.FC = () => {
                   </button>
                 </div>
               </FormField>
+
+              {adminError && (
+                <div className="text-red-500 text-sm">{adminError}</div>
+              )}
 
               <Button type="submit" className="w-full" loading={loading}>
                 Sign In as Admin
