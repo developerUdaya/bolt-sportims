@@ -8,7 +8,7 @@ interface Props {
 
 const PrivateRoute = ({ children }: Props) => {
   const isLoggedIn = localStorage.getItem('user'); // Replace with your actual auth logic
-  return isLoggedIn ? children : <Navigate to="/login" replace />;
+  return isLoggedIn ? children : <Navigate to="/" replace />;
 };
 
 export default PrivateRoute; // ✅ This line must exist
