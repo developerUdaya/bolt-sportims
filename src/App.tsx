@@ -29,10 +29,6 @@ function App() {
           <Route path="/eventsDetails/participation" element={<EventParticipation />} />
           <Route path="/eventsDetails/event-participation/:eventId" element={<EventParticipantsDetails />} />
           <Route path="/eventsDetails/payment" element={<PaymentReport />} />
-          <Route path="/eventOfficial" element={<EventOfficial />} />
-          <Route path="/eventOrganisers" element={<EventOrganisers />} />
-          <Route path="gallery" element={<Gallery />} />
-          <Route path="news" element={<News />} />
         </Route>
 
       
