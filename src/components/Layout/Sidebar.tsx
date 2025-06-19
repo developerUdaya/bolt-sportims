@@ -21,29 +21,7 @@ import {
 const Sidebar: React.FC = () => {
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-    {
-      icon: Users,
-      label: 'Users Management',
-      path: '/users',
-      submenu: [
-        { label: 'Players', path: '/users/players' },
-        { label: 'Clubs', path: '/users/clubs' },
-        { label: 'Districts', path: '/users/districts' },
-        { label: 'States', path: '/users/states' },
-        { label: 'Admins', path: '/users/admins' }
-      ]
-    },
-    {
-      icon: UserCheck,
-      label: 'Pending Approvals',
-      path: '/approvals',
-      submenu: [
-        { label: 'Players', path: '/approvals/players' },
-        { label: 'Clubs', path: '/approvals/clubs' },
-        { label: 'Districts', path: '/approvals/districts' },
-        { label: 'States', path: '/approvals/states' }
-      ]
-    },
+
     { icon: Calendar, label: 'Events', path: '/events' },
     {
       icon: Cog,
@@ -54,10 +32,7 @@ const Sidebar: React.FC = () => {
         { label: 'Payment Report', path: '/eventsDetails/payment' },
       ]
     },
-    { icon: UserRoundCog, label: 'Event Official', path: '/eventOfficial' },
-    { icon: UserSearch, label: 'Event Organisers', path: '/eventOrganisers' },
-    { icon: Image, label: 'Gallery', path: '/gallery' },
-    { icon: Newspaper, label: 'News', path: '/news' },
+
   ];
 
   const [expandedMenu, setExpandedMenu] = React.useState<string | null>('/users');
