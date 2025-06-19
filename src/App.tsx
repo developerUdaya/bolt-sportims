@@ -36,10 +36,10 @@ import EventParticipation from './pages/eventDetails/EventParticipation';
 import PaymentReport from './pages/eventDetails/PaymentReport';
 import EventOfficial from './pages/EventOfficial';
 import EventOrganisers from './pages/EventOrganisers';
-import EventParticipantsDetails from './pages/eventDetails/EventParticipantsDetails';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import PrivateRoute from './components/PrivateRoute';
+import EventParticipantsDetails from './pages/eventDetails/EventParticipantsDetails';
+
 function App() {
   return (
     <Router>
@@ -55,15 +55,8 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
 
-        {/* Admin Routes (Protected) */}
-        <Route
-          path="/"
-          element={
-            <PrivateRoute>
-              <Layout />
-            </PrivateRoute>
-          }
-        >
+        {/* Admin Routes */}
+        <Route path="/" element={<Layout />}>
           <Route index element={<Dashboard />} />
           <Route path="users/players" element={<Players />} />
           <Route path="users/clubs" element={<Clubs />} />
@@ -84,30 +77,16 @@ function App() {
           <Route path="news" element={<News />} />
         </Route>
 
-        {/* Player Routes (Protected) */}
-        <Route
-          path="/player"
-          element={
-            <PrivateRoute>
-              <PlayerLayout />
-            </PrivateRoute>
-          }
-        >
+        {/* Player Routes */}
+        <Route path="/player" element={<PlayerLayout />}>
           <Route index element={<PlayerDashboard />} />
           <Route path="events" element={<UpcomingEvents />} />
           <Route path="my-events" element={<MyEvents />} />
           <Route path="profile" element={<PlayerProfile />} />
         </Route>
 
-        {/* Event Official Routes (Protected) */}
-        <Route
-          path="/official"
-          element={
-            <PrivateRoute>
-              <OfficialLayout />
-            </PrivateRoute>
-          }
-        >
+        {/* Event Official Routes */}
+        <Route path="/official" element={<OfficialLayout />}>
           <Route index element={<OfficialDashboard />} />
           <Route path="schedules" element={<ScheduleManagement />} />
           <Route path="update-results" element={<UpdateResults />} />
@@ -116,15 +95,8 @@ function App() {
           <Route path="reports" element={<ReportsPage />} />
         </Route>
 
-        {/* Club Routes (Protected) */}
-        <Route
-          path="/club"
-          element={
-            <PrivateRoute>
-              <ClubLayout />
-            </PrivateRoute>
-          }
-        >
+        {/* Club Routes */}
+        <Route path="/club" element={<ClubLayout />}>
           <Route index element={<ClubDashboard />} />
           <Route path="players" element={<ClubPlayers />} />
           <Route path="events" element={<ClubEvents />} />
